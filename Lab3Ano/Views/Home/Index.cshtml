@@ -1,0 +1,383 @@
+﻿@using Lab3Ano.Helpers
+@model PaginatedList<Lab3Ano.Models.Entidades.Anuncio>
+
+@{
+    ViewData["Title"] = "Início";
+    var likes = ViewBag.UserLikes as List<int> ?? new List<int>();
+    bool haCarrosNoSistema = ViewBag.HaCarros ?? true;
+
+
+    var todasMarcas = ViewBag.TodasMarcas as List<Lab3Ano.Models.Entidades.Marca> ?? new List<Lab3Ano.Models.Entidades.Marca>();
+    var marcasSeguidas = ViewBag.MarcasSeguidas as List<int> ?? new List<int>();
+}
+
+<div class="container mb-4 mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h5 class="fw-bold"><i class="bi bi-bell text-primary"></i> Seguir Marcas</h5>
+        <small class="text-muted d-none d-md-block">Recebe notificações quando saírem carros destas marcas!</small>
+    </div>
+
+    <div class="d-flex overflow-auto pb-2 gap-2" style="scrollbar-width: thin;">
+        @foreach (var marcaItem in todasMarcas)
+        {
+            bool isFollowing = marcasSeguidas.Contains(marcaItem.Id);
+
+            <button onclick="toggleMarca(@marcaItem.Id, this)"
+                    class="btn btn-sm d-flex align-items-center gap-2 shadow-sm flex-shrink-0 @(isFollowing ? "btn-primary" : "btn-light border")"
+                    style="min-width: 100px; justify-content: center; transition: all 0.2s;">
+
+                <span>@marcaItem.Nome</span>
+                @if (isFollowing)
+                {
+                    <i class="bi bi-bell-fill"></i>
+                }
+                else
+                {
+                    <i class="bi bi-bell text-muted"></i>
+                }
+            </button>
+        }
+    </div>
+</div>
+<div class="offcanvas offcanvas-start" tabindex="-1" id="menuFiltros" aria-labelledby="menuFiltrosLabel">
+    <div class="offcanvas-header bg-primary text-white">
+        <h5 class="offcanvas-title" id="menuFiltrosLabel"><i class="bi bi-funnel"></i> Filtrar Carros</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <form asp-action="Index" method="get">
+            <input type="hidden" name="searchString" value="@ViewData["CurrentFilter"]" />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Marca</label>
+                <select name="marca" id="ddlMarca" class="form-select" asp-items="ViewBag.Marcas">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Modelo</label>
+                <select name="modelo" id="ddlModelo" class="form-select" disabled>
+                    <option value="">Selecione uma marca primeiro...</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Categoria</label>
+                <select name="categoria" class="form-select" asp-items="ViewBag.Categorias">
+                    <option value="">Todas</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Combustível</label>
+                <select name="combustivel" class="form-select" asp-items="ViewBag.Combustiveis">
+                    <option value="">Todos</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Preço (€)</label>
+                <div class="d-flex gap-2">
+                    <input type="number" name="precoMin" class="form-control" placeholder="Mín" value="@ViewData["PrecoMin"]">
+                    <input type="number" name="precoMax" class="form-control" placeholder="Máx" value="@ViewData["PrecoMax"]">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Potência (CV)</label>
+                <div class="d-flex gap-2">
+                    <input type="number" name="minPotencia" class="form-control" placeholder="Mín" value="@ViewData["MinPotencia"]">
+                    <input type="number" name="maxPotencia" class="form-control" placeholder="Máx" value="@ViewData["MaxPotencia"]">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Cilindrada (cm³)</label>
+                <div class="d-flex gap-2">
+                    <input type="number" name="minCilindrada" class="form-control" placeholder="Mín" value="@ViewData["MinCilindrada"]">
+                    <input type="number" name="maxCilindrada" class="form-control" placeholder="Máx" value="@ViewData["MaxCilindrada"]">
+                </div>
+            </div>
+
+            <hr>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Limpar Tudo</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="container mt-2">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="display-6 fw-bold">VilaMarket</h1>
+            <p class="text-muted mb-0">Encontra o teu carro ideal.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <form asp-action="Index" method="get" class="d-flex">
+                <input type="text" name="searchString" value="@ViewData["CurrentFilter"]"
+                       class="form-control me-2" placeholder="Pesquisar..." style="width: 300px;">
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-search"></i></button>
+            </form>
+
+            <button class="btn btn-dark shadow-sm" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuFiltros">
+                <i class="bi bi-sliders me-2"></i>Filtros Avançados
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+
+        @if (haCarrosNoSistema == false)
+        {
+            <div class="col-12 text-center py-5">
+                <div class="mb-3">
+                    <i class="bi bi-shop display-1 text-muted opacity-50"></i>
+                </div>
+                <h3 class="fw-bold text-secondary">Não existem carros à venda no momento.</h3>
+                <p class="text-muted">Estamos a aguardar novos anúncios. Sê o primeiro a vender!</p>
+
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @if (User.IsInRole("Vendedor") || User.IsInRole("Admin"))
+                    {
+                        <a asp-controller="Anuncio" asp-action="Create" class="btn btn-primary mt-3 px-4 rounded-pill">
+                            <i class="bi bi-plus-circle me-1"></i> Vender o meu carro
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Vendedores" asp-action="TornarVendedor" class="btn btn-primary mt-3 px-4 rounded-pill">
+                            <i class="bi bi-briefcase-fill me-1"></i> Quero ser Vendedor
+                        </a>
+                    }
+                }
+                else
+                {
+                    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary mt-3 px-4 rounded-pill">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Faz Login para Vender
+                    </a>
+                }
+            </div>
+        }
+        else if (!Model.Any())
+        {
+            <div class="col-12">
+                <div class="alert alert-warning text-center py-5 shadow-sm border-0 bg-light">
+                    <div class="mb-3">
+                        <i class="bi bi-search display-3 text-warning"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">Ups!</h4>
+                    <p class="mb-3 text-muted">Não encontrámos carros com esses filtros.</p>
+
+                    <button class="btn btn-dark rounded-pill px-4" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuFiltros">
+                        Ajustar Filtros
+                    </button>
+                    <br>
+                    <a asp-action="Index" class="btn btn-link mt-3 text-muted text-decoration-none small">
+                        <i class="bi bi-x-circle"></i> Limpar pesquisa
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var anuncio in Model)
+            {
+                var carro = anuncio.IdCarroNavigation;
+                var fotoUrl = anuncio.Imagems.FirstOrDefault()?.Url;
+                bool jaGostou = likes.Contains(anuncio.Id);
+
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 shadow-sm border-0 hover-rise">
+
+                        <div class="position-relative" style="height: 240px; background-color: #e9ecef;">
+                            <div class="btn-favorite"
+                                 data-car-id="@anuncio.Id"
+                                 style="position: absolute; top: 10px; left: 10px; z-index: 100; cursor: pointer; background: white; border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                                <i class="bi @(jaGostou ? "bi-heart-fill text-danger" : "bi-heart text-dark") heart-icon fs-5"></i>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(fotoUrl))
+                            {
+                                <img src="/imagens/@fotoUrl"
+                                     class="card-img-top w-100 h-100"
+                                     style="object-fit: cover; object-position: center;"
+                                     alt="Foto"
+                                     onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Imagem+Indispon%C3%ADvel';">
+                            }
+                            else
+                            {
+                                <img src="https://placehold.co/600x400?text=VilaMarket&bg=e9ecef&color=6c757d" class="card-img-top w-100 h-100" style="object-fit: cover;">
+                            }
+                            <span class="badge bg-dark position-absolute top-0 end-0 m-2 shadow-sm">
+                                @carro.Ano
+                            </span>
+                        </div>
+
+                        <div class="card-body pb-2">
+                            <h6 class="text-muted small text-uppercase mb-1">
+                                @(carro.IdModeloNavigation?.IdMarcaNavigation?.Nome ?? "Marca")
+                            </h6>
+                            <h5 class="card-title fw-bold text-truncate" title="@(carro.IdModeloNavigation?.Nome)">
+                                @(carro.IdModeloNavigation?.Nome ?? "Modelo")
+                            </h5>
+                            <h4 class="text-primary fw-bold my-3">
+                                @carro.Preco.ToString("N0") €
+                            </h4>
+
+                            <div class="d-flex justify-content-between text-muted small bg-light p-2 rounded-3 mb-2">
+                                <span><i class="bi bi-fuel-pump-fill text-primary"></i> @(carro.IdCombustivelNavigation?.Tipo ?? "N/A")</span>
+                                <span><i class="bi bi-speedometer2 text-primary"></i> @(carro.Quilometragem.ToString("N0")) km</span>
+                                <span><i class="bi bi-lightning-fill text-primary"></i> @carro.Potencia CV</span>
+                            </div>
+                        </div>
+
+                        <div class="card-footer bg-white border-top-0 pt-0 pb-3">
+                            <a asp-controller="Anuncio" asp-action="Details" asp-route-id="@anuncio.Id" class="btn btn-outline-primary w-100 rounded-pill fw-bold stretched-link">
+                                Ver Detalhes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    @if (Model.Any())
+    {
+        // ... (PAGINAÇÃO MANTIDA IGUAL) ...
+        var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+        var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+        int raio = 2;
+        int startPage = Math.Max(2, Model.PageIndex - raio);
+        int endPage = Math.Min(Model.TotalPages - 1, Model.PageIndex + raio);
+
+        <div class="d-flex justify-content-center mt-5 mb-5">
+            <nav aria-label="Navegação de página">
+                <ul class="pagination pagination-lg shadow-sm">
+                    <li class="page-item @prevDisabled">
+                        <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.PageIndex - 1)" asp-route-searchString="@ViewData["CurrentFilter"]">&laquo;</a>
+                    </li>
+                    <li class="page-item @(Model.PageIndex == 1 ? "active" : "")">
+                        <a class="page-link" asp-action="Index" asp-route-pageNumber="1" asp-route-searchString="@ViewData["CurrentFilter"]">1</a>
+                    </li>
+                    @if (startPage > 2)
+                    {
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    }
+                    @for (int i = startPage; i <= endPage; i++)
+                    {
+                        <li class="page-item @(i == Model.PageIndex ? "active" : "")"><a class="page-link" asp-action="Index" asp-route-pageNumber="@i" asp-route-searchString="@ViewData["CurrentFilter"]">@i</a></li>
+                    }
+                    @if (endPage < Model.TotalPages - 1)
+                    {
+                        <li class="page-item disabled"><span class="page-link">...</span></li>
+                    }
+                    @if (Model.TotalPages > 1)
+                    {
+                        <li class="page-item @(Model.PageIndex == Model.TotalPages ? "active" : "")">
+                            <a class="page-link" asp-action="Index" asp-route-pageNumber="@Model.TotalPages" asp-route-searchString="@ViewData["CurrentFilter"]">@Model.TotalPages</a>
+                        </li>
+                    }
+                    <li class="page-item @nextDisabled">
+                        <a class="page-link" asp-action="Index" asp-route-pageNumber="@(Model.PageIndex + 1)" asp-route-searchString="@ViewData["CurrentFilter"]">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // --- 1. SCRIPT PARA SEGUIR MARCA (NOVO) ---
+        function toggleMarca(idMarca, btnElement) {
+
+            $.post('/Home/ToggleSeguirMarca', { idMarca: idMarca })
+             .done(function (data) {
+                 if (data.success) {
+                     var icon = $(btnElement).find('i');
+
+                     if (data.isFollowing) {
+                         $(btnElement).removeClass('btn-light border').addClass('btn-primary');
+                         icon.removeClass('bi-bell text-muted').addClass('bi-bell-fill');
+                     } else {
+                         $(btnElement).removeClass('btn-primary').addClass('btn-light border');
+                         icon.removeClass('bi-bell-fill').addClass('bi-bell text-muted');
+                     }
+                 } else {
+                     // Se não estiver logado, redireciona para login
+                     window.location.href = "/Identity/Account/Login";
+                 }
+             })
+             .fail(function() {
+                 window.location.href = "/Identity/Account/Login";
+             });
+        }
+
+        // --- 2. RESTO DOS SCRIPTS EXISTENTES ---
+        document.addEventListener('DOMContentLoaded', function () {
+            var ddlMarca = document.getElementById('ddlMarca');
+            var ddlModelo = document.getElementById('ddlModelo');
+
+            if (ddlMarca && ddlModelo) {
+                ddlMarca.addEventListener('change', function () {
+                    var marcaSelecionada = this.value;
+                    ddlModelo.innerHTML = '<option value="">A carregar...</option>';
+                    ddlModelo.disabled = true;
+
+                    if (marcaSelecionada) {
+                        fetch('/Home/GetModelosByMarca?nomeMarca=' + encodeURIComponent(marcaSelecionada))
+                            .then(response => response.json())
+                            .then(data => {
+                                ddlModelo.innerHTML = '<option value="">Todos</option>';
+                                data.forEach(function (item) {
+                                    var option = document.createElement('option');
+                                    option.value = item.value;
+                                    option.text = item.text;
+                                    ddlModelo.appendChild(option);
+                                });
+                                ddlModelo.disabled = false;
+                            })
+                            .catch(error => {
+                                console.error('Erro:', error);
+                                ddlModelo.innerHTML = '<option value="">Erro ao carregar</option>';
+                            });
+                    } else {
+                        ddlModelo.innerHTML = '<option value="">Selecione uma marca primeiro...</option>';
+                        ddlModelo.disabled = true;
+                    }
+                });
+            }
+        });
+
+        $(document).on('click', '.btn-favorite', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var btn = $(this);
+            var icon = btn.find('.heart-icon');
+
+            $.post('/Home/ToggleFavorite', { carId: btn.data('car-id') })
+            .done(function (data) {
+                if (data.success) {
+                    if (data.isLiked) {
+                        icon.removeClass('bi-heart text-dark').addClass('bi-heart-fill text-danger');
+                    } else {
+                        icon.removeClass('bi-heart-fill text-danger').addClass('bi-heart text-dark');
+                    }
+                }
+            })
+            .fail(function(xhr) {
+                if (xhr.status === 401) {
+                    alert("Sessão expirada. Faz login novamente.");
+                } else {
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+    </script>
+}

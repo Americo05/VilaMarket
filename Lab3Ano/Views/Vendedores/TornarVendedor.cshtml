@@ -1,0 +1,93 @@
+﻿@model Lab3Ano.Models.Entidades.Vendedor
+
+@{
+    ViewData["Title"] = "Registo de Vendedor";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h3><i class="bi bi-briefcase-fill"></i> Dados de Faturação</h3>
+                    <p class="mb-0">Preenche os dados da tua empresa.</p>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="TornarVendedor" method="post">
+                        @if (!ViewData.ModelState.IsValid)
+                            {
+                                <div asp-validation-summary="All" class="alert alert-danger" role="alert">
+                                    <strong>Por favor corrige os erros abaixo:</strong>
+                                </div>
+                            }
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tipo de Empresa <span class="text-danger">*</span></label>
+                            <select asp-for="TipoEmp" class="form-select" required>
+                                <option value="" selected disabled>-- Seleciona o Tipo --</option>
+                                <option value="Particular">Vendedor Particular</option>
+                                <option value="EmpresarioNomeIndividual">Empresário em Nome Individual (ENI)</option>
+                                <option value="Sociedade">Sociedade / Empresa (Lda)</option>
+                            </select>
+                            <span asp-validation-for="TipoEmp" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">NIF <span class="text-danger">*</span></label>
+                            <input asp-for="Nif" class="form-control" placeholder="123456789" required />
+                            <span asp-validation-for="Nif" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">País <span class="text-danger">*</span></label>
+                            <select asp-for="Pais" class="form-select" required>
+                                <option value="Portugal" selected>Portugal</option>
+                                <option value="Espanha">Espanha</option>
+                                <option value="Franca">França</option>
+                                <option value="Alemanha">Alemanha</option>
+                            </select>
+                            <span asp-validation-for="Pais" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Morada Completa <span class="text-danger">*</span></label>
+                            <input asp-for="Morada" class="form-control" placeholder="Rua, Número, Andar..." required />
+                            <span asp-validation-for="Morada" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Código Postal <span class="text-danger">*</span></label>
+                                <input asp-for="CodPostal" class="form-control" placeholder="0000-000" required />
+                                <span asp-validation-for="CodPostal" class="text-danger"></span>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label fw-bold">Localidade <span class="text-danger">*</span></label>
+                                <input asp-for="Localidade" class="form-control" placeholder="Cidade/Vila" required />
+                                <span asp-validation-for="Localidade" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Contacto Telefónico <span class="text-danger">*</span></label>
+                            <input asp-for="Contactos" class="form-control" placeholder="912 345 678" required />
+                            <span asp-validation-for="Contactos" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                                Enviar Pedido para Aprovação
+                            </button>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-link text-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

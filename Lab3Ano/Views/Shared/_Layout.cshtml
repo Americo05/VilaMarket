@@ -1,0 +1,216 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+@inject UserManager<IdentityUser> UserManager
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - VilaMarket</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Lab3Ano.styles.css" asp-append-version="true" />
+    <link rel="icon" type="image/png" href="~/imagens/Logo.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container-fluid">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/imagens/Logo.png" alt="VilaMarket" height="60" width="80" />
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+
+                    <ul class="navbar-nav flex-grow-1">
+
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Mensagens" asp-action="Index">
+                                    <i class="bi bi-chat-dots-fill"></i> Mensagens
+                                </a>
+                            </li>
+                        }
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-danger fw-bold" asp-area="" asp-controller="Admin" asp-action="Index">
+                                    <i class="bi bi-speedometer2"></i> ADMIN
+                                </a>
+                            </li>
+                        }
+                    </ul>
+
+                    <ul class="navbar-nav align-items-center">
+
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item dropdown me-3">
+                                <a class="nav-link position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" onclick="carregarDropdownNotificacoes()">
+                                    <i class="bi bi-bell-fill fs-5"></i>
+
+                                    <span id="badgeNotificacoes" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size: 0.6rem;">
+                                        0
+                                    </span>
+                                </a>
+
+                                <ul class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="notifDropdown" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                                    <li class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
+                                        <h6 class="dropdown-header p-0 m-0">Notificações</h6>
+                                        <button class="btn btn-link btn-sm p-0 text-decoration-none" onclick="marcarTodasLidas(event)" style="font-size: 0.75rem;">Limpar</button>
+                                    </li>
+
+                                    <div id="listaNotificacoes">
+                                    <li><span class="dropdown-item-text text-center text-muted small py-3">A carregar...</span></li>
+                    </div>
+                    </ul>
+                    </li>
+                }
+
+                <partial name="_LoginPartial" />
+                </ul>
+            </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3">
+
+            @if (TempData["Sucesso"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i> @TempData["Sucesso"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["Erro"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Erro"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted mt-auto py-3 bg-light">
+        <div class="container text-center">
+            <div class="row align-items-center">
+
+                <div class="col-md-6 text-md-start mb-2 mb-md-0">
+                    &copy; 2025 - <strong>VilaMarket</strong>
+                </div>
+
+                <div class="col-md-6 text-md-end">
+                    <a asp-area="" asp-controller="Home" asp-action="Sobre" class="text-muted text-decoration-none fw-bold">
+                        <i class="bi bi-info-circle"></i> Informações do Marketplace
+                    </a>
+                    <span class="mx-2">|</span>
+                    <span class="small">Termos e Contactos</span>
+                </div>
+
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        function atualizarContador() {
+            var badge = document.getElementById('badgeNotificacoes');
+            if (!badge) return; // Se não estiver logado, sai
+
+            fetch('/Notificacoes/ObterContagem')
+                .then(r => r.json())
+                .then(count => {
+                    if (count > 0) {
+                        badge.innerText = count;
+                        badge.style.display = 'inline-block';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        function carregarDropdownNotificacoes() {
+            var lista = document.getElementById('listaNotificacoes');
+
+            fetch('/Notificacoes/ObterUltimas')
+                .then(r => r.json())
+                .then(data => {
+                    var html = '';
+                    if (data.length === 0) {
+                        html = '<li><div class="text-center text-muted py-4"><i class="bi bi-bell-slash fs-4 d-block mb-2"></i>Sem notificações.</div></li>';
+                    } else {
+                        data.forEach(n => {
+                            var bgClass = n.lida ? 'bg-white' : 'bg-light fw-bold';
+                            var icon = n.lida ? 'bi-check2' : 'bi-circle-fill text-primary';
+                            var linkHref = n.urlDestino ? n.urlDestino : "#";
+
+                            html += `
+                            <li>
+                                <a class="dropdown-item ${bgClass} border-bottom py-2 d-flex align-items-start"
+                                   href="${linkHref}" onclick="marcarLida(${n.id})">
+                                    <div class="me-2 mt-1"><i class="bi ${icon}" style="font-size: 0.5rem;"></i></div>
+                                    <div>
+                                        <div style="font-size: 0.9rem; white-space: normal;">${n.texto}</div>
+                                        <small class="text-muted" style="font-size: 0.7rem;">${n.data}</small>
+                                    </div>
+                                </a>
+                            </li>`;
+                        });
+                    }
+                    lista.innerHTML = html;
+                });
+        }
+
+        function marcarLida(id) {
+            fetch('/Notificacoes/MarcarComoLida?id=' + id, { method: 'POST' });
+            setTimeout(atualizarContador, 1000);
+        }
+
+            function marcarTodasLidas(e) {
+            if(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            var lista = document.getElementById('listaNotificacoes');
+            lista.innerHTML = '<li><span class="dropdown-item-text text-center text-muted small py-3">A limpar...</span></li>';
+
+            fetch('/Notificacoes/LimparTodas', { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        atualizarContador();
+                        carregarDropdownNotificacoes();
+                    } else {
+                        console.error("Erro ao limpar notificações");
+                    }
+                })
+                .catch(err => console.error(err));
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            atualizarContador();
+            setInterval(atualizarContador, 15000); 
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

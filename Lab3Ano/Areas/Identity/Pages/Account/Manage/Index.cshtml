@@ -1,0 +1,937 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Conta Pessoal";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .nav-tabs-custom {
+        border-bottom: none;
+        margin-bottom: 20px;
+    }
+
+    .nav-link-custom {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 15px;
+        font-weight: 600;
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        color: #333;
+        text-decoration: none;
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+        .nav-link-custom.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .nav-link-custom.disabled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+    .action-card {
+        background: white;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #eee;
+        height: 100%;
+    }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+    .icon-circle {
+        width: 80px;
+        height: 80px;
+        background-color: #00bfff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px auto;
+        color: white;
+        font-size: 2rem;
+    }
+
+    .content-area {
+        background-color: #f8f9fa;
+        padding: 30px;
+        min-height: 400px;
+    }
+
+    .msg-preview:hover {
+        background-color: #e9ecef;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    #chatBox::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #chatBox::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    #chatBox::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 4px;
+    }
+
+        #chatBox::-webkit-scrollbar-thumb:hover {
+            background: #bbb;
+        }
+</style>
+
+<div class="container py-4">
+
+    @if (TempData["ShowRecoveryAlert"] != null && (bool)TempData["ShowRecoveryAlert"] == true)
+    {
+        var codes = (string[])TempData["RecoveryCodes"];
+        <div class="alert alert-warning border-warning shadow mb-4" role="alert">
+            <h4 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> Guarda estes códigos!</h4>
+            <p>Se perderes o telemóvel, estes códigos são a única forma de recuperar a conta.</p>
+            <div class="row font-monospace fw-bold text-dark mb-2">
+                @if (codes != null)
+                {
+                    foreach (var code in codes)
+                    {
+                        <div class="col-md-3 col-6">@code</div>
+                    }
+                }
+            </div>
+        </div>
+    }
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold m-0">Olá, @Model.Input.Username!</h2>
+            <small class="text-muted">Conta Pessoal</small>
+        </div>
+    </div>
+
+    <div class="row g-0 mb-4" id="pills-tab" role="tablist">
+        <div class="col-md-3" role="presentation">
+            <button class="nav-link-custom border-0 w-100" id="pills-anuncios-tab" data-bs-toggle="pill" data-bs-target="#pills-anuncios" type="button" role="tab">
+                Gestão de Vendas
+            </button>
+        </div>
+        <div class="col-md-3" role="presentation">
+            <button class="nav-link-custom border-0 w-100" id="pills-mensagens-tab" data-bs-toggle="pill" data-bs-target="#pills-mensagens" type="button" role="tab" onclick="carregarListaMensagens()">
+                Mensagens
+            </button>
+        </div>
+        <div class="col-md-3" role="presentation">
+            <button class="nav-link-custom border-0 w-100" id="pills-pagamentos-tab" data-bs-toggle="pill" data-bs-target="#pills-pagamentos" type="button" role="tab">
+                Minhas Compras
+            </button>
+        </div>
+        <div class="col-md-3" role="presentation">
+            <button class="nav-link-custom border-0 w-100 active" id="pills-definicoes-tab" data-bs-toggle="pill" data-bs-target="#pills-definicoes" type="button" role="tab">
+                Definições
+            </button>
+        </div>
+    </div>
+
+    <partial name="_StatusMessage" model="Model.StatusMessage" />
+
+    <div class="content-area border rounded">
+
+        <div class="tab-content" id="pills-tabContent">
+
+            <div class="tab-pane fade" id="pills-anuncios" role="tabpanel" aria-labelledby="pills-anuncios-tab">
+                <ul class="nav nav-pills mb-4 gap-2" id="pills-vendas-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill px-4" id="sub-meus-carros-tab" data-bs-toggle="pill" data-bs-target="#sub-meus-carros" type="button">
+                            <i class="bi bi-car-front-fill me-2"></i>Os meus Carros
+                        </button>
+                    </li>
+                    @if (User.IsInRole("Vendedor") || User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill px-4" id="sub-historico-vendas-tab" data-bs-toggle="pill" data-bs-target="#sub-historico-vendas" type="button">
+                                <i class="bi bi-graph-up-arrow me-2"></i>Histórico de Vendas
+                            </button>
+                        </li>
+                    }
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="sub-meus-carros" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="fw-bold text-primary mb-0">Gerir Stock</h4>
+                            @if (User.IsInRole("Vendedor") || User.IsInRole("Admin"))
+                            {
+                                <a asp-controller="Anuncio" asp-action="Create" class="btn btn-primary btn-lg shadow-sm fw-bold px-4">
+                                    <i class="bi bi-plus-lg"></i> Vender Carro
+                                </a>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-primary btn-lg shadow-sm fw-bold px-4" onclick="perguntarTornarVendedor()">
+                                    <i class="bi bi-plus-lg"></i> Vender Carro
+                                </button>
+                            }
+                        </div>
+
+                        @if (Model.PedidosRecebidos != null && Model.PedidosRecebidos.Any())
+                        {
+                            <div class="card border-primary shadow-sm mb-4">
+                                <div class="card-header bg-primary text-white py-3">
+                                    <h5 class="fw-bold mb-0"><i class="bi bi-inbox-fill me-2"></i>Pedidos de Reserva Recebidos</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th class="ps-4">Data</th>
+                                                    <th>Cliente</th>
+                                                    <th>Carro</th>
+                                                    <th class="text-end pe-4">Ação</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var pedido in Model.PedidosRecebidos)
+                                                {
+                                                    <tr>
+                                                        <td class="ps-4">@pedido.DataReserva.ToString("dd/MM HH:mm")</td>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="bg-light rounded-circle p-1 me-2"><i class="bi bi-person"></i></div>
+                                                                <strong>@(pedido.IdCompradorNavigation?.User?.UserName ?? "Cliente")</strong>
+                                                            </div>
+                                                        </td>
+                                                        <td>@pedido.IdAnuncioNavigation?.IdCarroNavigation?.IdModeloNavigation?.Nome</td>
+                                                        <td class="text-end pe-4">
+                                                            <div class="btn-group">
+                                                                <form asp-controller="Negocios" asp-action="AprovarReserva" method="post">
+                                                                    <input type="hidden" name="reservaId" value="@pedido.Id" />
+                                                                    <button type="submit" class="btn btn-success btn-sm me-1" title="Aprovar"><i class="bi bi-check-lg"></i> Aprovar</button>
+                                                                </form>
+                                                                <form asp-controller="Negocios" asp-action="RejeitarReserva" method="post">
+                                                                    <input type="hidden" name="reservaId" value="@pedido.Id" />
+                                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Rejeitar"><i class="bi bi-x-lg"></i></button>
+                                                                </form>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        @if (Model.MeusAnuncios != null && Model.MeusAnuncios.Any())
+                        {
+                            <div class="row g-3">
+                                @foreach (var anuncio in Model.MeusAnuncios)
+                                {
+                                    <div class="col-12">
+                                        <div class="card shadow-sm border-0 overflow-hidden">
+                                            <div class="row g-0">
+                                                <div class="col-md-3 bg-light d-flex align-items-center justify-content-center" style="min-height: 150px;">
+                                                    @if (anuncio.Imagems != null && anuncio.Imagems.Any())
+                                                    {
+                                                        var foto = anuncio.Imagems.First().Url;
+                                                        var srcImg = (foto.StartsWith("http") ? foto : $"/imagens/{foto}");
+                                                        <img src="@srcImg" class="img-fluid w-100 h-100 object-fit-cover" alt="Foto">
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="text-muted"><i class="bi bi-image fs-1"></i></div>
+                                                    }
+                                                </div>
+                                                <div class="col-md-9">
+                                                    <div class="card-body h-100 d-flex flex-column justify-content-between">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div>
+                                                                <h5 class="fw-bold mb-1">
+                                                                    @anuncio.IdCarroNavigation?.IdModeloNavigation?.IdMarcaNavigation?.Nome
+                                                                    @anuncio.IdCarroNavigation?.IdModeloNavigation?.Nome
+                                                                </h5>
+                                                                <p class="text-muted small mb-0">
+                                                                    @anuncio.IdCarroNavigation?.Ano • @(anuncio.IdCarroNavigation?.Quilometragem.ToString("N0") ?? "0") km
+                                                                </p>
+                                                            </div>
+                                                            <h4 class="fw-bold text-primary">@(anuncio.IdCarroNavigation?.Preco.ToString("N0") ?? "0") €</h4>
+                                                        </div>
+
+                                                        <div class="mt-3 d-flex justify-content-between align-items-center">
+                                                            <div>
+                                                                @if (anuncio.Compras != null && anuncio.Compras.Any())
+                                                                {
+                                                                    <span class="badge bg-secondary"><i class="bi bi-lock-fill"></i> Vendido (Pago)</span>
+                                                                }
+                                                                else if (anuncio.Estado == "Vendido")
+                                                                {
+                                                                    <span class="badge bg-danger">Marcado Vendido</span>
+                                                                }
+                                                                else if (anuncio.Estado == "Reservado")
+                                                                {
+                                                                    <span class="badge bg-warning text-dark">Reservado</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="badge bg-success">Ativo</span>
+                                                                }
+                                                            </div>
+                                                            <div class="d-flex align-items-center gap-2">
+                                                                <a asp-controller="Anuncio" asp-action="Details" asp-route-id="@anuncio.Id" class="btn btn-outline-secondary btn-sm" title="Ver Detalhes"><i class="bi bi-eye"></i></a>
+                                                                @if (anuncio.Compras == null || !anuncio.Compras.Any())
+                                                                {
+                                                                    int visitasPendentes = anuncio.Visita?.Count(v => v.Estado == "Pendente") ?? 0;
+                                                                    <a asp-controller="Vendedores" asp-action="GestaoVisitas" class="btn btn-outline-dark btn-sm position-relative" title="Gerir Visitas">
+                                                                        <i class="bi bi-calendar-check"></i>
+                                                                        @if (visitasPendentes > 0)
+                                                                        {
+                                                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light">@visitasPendentes</span>
+                                                                        }
+                                                                    </a>
+                                                                    <a asp-controller="Anuncio" asp-action="Edit" asp-route-id="@anuncio.Id" class="btn btn-outline-primary btn-sm"><i class="bi bi-pencil"></i> Editar</a>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <button class="btn btn-light btn-sm text-muted border" disabled title="Bloqueado após venda"><i class="bi bi-lock-fill"></i> Bloqueado</button>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="card border-0 shadow-sm text-center py-5 bg-white">
+                                <div class="card-body">
+                                    <div class="bg-light rounded-circle d-inline-flex p-4 mb-3 text-primary"><i class="bi bi-tags-fill fs-1"></i></div>
+                                    <h5 class="fw-bold text-dark">Gere os teus anúncios aqui</h5>
+                                    <p class="text-muted">Ainda não tens carros à venda.</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="tab-pane fade" id="sub-historico-vendas" role="tabpanel">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white py-3">
+                                <h5 class="fw-bold text-success mb-0"><i class="bi bi-cash-coin me-2"></i>Vendas</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                @if (Model.MinhasVendas != null && Model.MinhasVendas.Any())
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th class="ps-4">Data</th>
+                                                    <th>Viatura</th>
+                                                    <th>Comprador</th>
+                                                    <th class="text-success fw-bold">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var venda in Model.MinhasVendas)
+                                                {
+                                                    <tr>
+                                                        <td class="ps-4">@venda.DataCompra.ToString("dd/MM/yyyy")</td>
+                                                        <td>@venda.IdAnuncioNavigation?.IdCarroNavigation?.IdModeloNavigation?.Nome</td>
+                                                        <td>
+                                                            <div class="d-flex align-items-center">
+                                                                <div class="bg-light rounded-circle p-1 me-2"><i class="bi bi-person"></i></div>
+                                                                <span>@(venda.IdCompradorNavigation?.User?.UserName ?? "Cliente")</span>
+                                                            </div>
+                                                        </td>
+                                                        <td class="fw-bold text-success">+ @venda.Valor.ToString("N0") €</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-5 text-muted">
+                                        <i class="bi bi-wallet2 fs-1"></i>
+                                        <p class="mt-2">Sem registo de vendas finalizadas.</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="pills-mensagens" role="tabpanel" aria-labelledby="pills-mensagens-tab">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="fw-bold text-primary mb-0"><i class="bi bi-chat-left-text-fill"></i> As tuas Conversas</h4>
+                    <button onclick="carregarListaMensagens()" class="btn btn-sm btn-light border"><i class="bi bi-arrow-clockwise"></i> Atualizar</button>
+                </div>
+
+                <div id="loaderMsg" class="text-center py-5" style="display:none;">
+                    <div class="spinner-border text-primary" role="status"><span class="visually-hidden">A carregar...</span></div>
+                </div>
+
+                <div id="viewListaMensagens" class="list-group shadow-sm border-0">
+                </div>
+
+                <div id="viewChatAtivo" style="display: none; height: 600px;">
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="pills-pagamentos" role="tabpanel" aria-labelledby="pills-pagamentos-tab">
+                <ul class="nav nav-pills mb-4 gap-2" id="pills-financeiro-tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active rounded-pill px-4" id="sub-pendentes-tab" data-bs-toggle="pill" data-bs-target="#sub-pendentes" type="button">
+                            <i class="bi bi-hourglass-split me-2"></i>Pendentes
+                            @if (Model.MinhasReservas != null && Model.MinhasReservas.Count > 0)
+                            {
+                                <span class="badge bg-white text-primary ms-2">@Model.MinhasReservas.Count</span>
+                            }
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link rounded-pill px-4" id="sub-faturas-tab" data-bs-toggle="pill" data-bs-target="#sub-faturas" type="button">
+                            <i class="bi bi-receipt me-2"></i>Minhas Faturas
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content" id="pills-financeiroContent">
+                    <div class="tab-pane fade show active" id="sub-pendentes" role="tabpanel">
+                        @if (Model.MinhasReservas != null && Model.MinhasReservas.Any())
+                        {
+                            <div class="card border-warning shadow-sm">
+                                <div class="card-header bg-warning bg-opacity-10 py-3">
+                                    <h5 class="fw-bold text-dark mb-0"><i class="bi bi-clock-history text-warning me-2"></i>Minhas Reservas</h5>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="bg-light">
+                                            <tr>
+                                                <th class="ps-4">Data Pedido</th>
+                                                <th>Viatura</th>
+                                                <th>Estado</th>
+                                                <th>Valor</th>
+                                                <th class="text-end pe-4">Ação</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var reserva in Model.MinhasReservas)
+                                            {
+                                                <tr>
+                                                    <td class="ps-4">@reserva.DataReserva.ToString("dd/MM/yyyy")</td>
+                                                    <td>
+                                                        <span class="fw-bold">@reserva.IdAnuncioNavigation?.IdCarroNavigation?.IdModeloNavigation?.IdMarcaNavigation?.Nome</span>
+                                                        @reserva.IdAnuncioNavigation?.IdCarroNavigation?.IdModeloNavigation?.Nome
+                                                    </td>
+                                                    <td>
+                                                        @if (reserva.IsAtiva == true)
+                                                        {
+                                                            <span class="text-success fw-bold">Aprovado</span>
+                                                            <small class="d-block text-danger">Expira em @((reserva.DataExpira - DateTime.Now).Days) dias</small>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-secondary">Aguardar Vendedor</span>
+                                                        }
+                                                    </td>
+                                                    <td class="fw-bold">@(reserva.IdAnuncioNavigation?.IdCarroNavigation?.Preco.ToString("N0") ?? "0") €</td>
+                                                    <td class="text-end pe-4">
+                                                        @if (reserva.IsAtiva == true)
+                                                        {
+                                                            <a asp-controller="Anuncio" asp-action="Checkout" asp-route-id="@reserva.IdAnuncio" class="btn btn-primary btn-sm fw-bold shadow-sm">
+                                                                <i class="bi bi-credit-card me-1"></i> Pagar Agora
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button class="btn btn-light btn-sm text-muted border" disabled><i class="bi bi-hourglass"></i> Pendente</button>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center py-5">
+                                <div class="mb-3 text-success"><i class="bi bi-check-circle-fill fs-1"></i></div>
+                                <h5 class="fw-bold text-muted">Sem reservas!</h5>
+                                <p class="text-muted small">Quando reservares um carro, ele aparecerá aqui.</p>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="tab-pane fade" id="sub-faturas" role="tabpanel">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-0">
+                                @if (Model.FaturasHistorico != null && Model.FaturasHistorico.Any())
+                                {
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th class="ps-4">Data</th>
+                                                    <th>Viatura</th>
+                                                    <th>Valor Pago</th>
+                                                    <th>Estado</th>
+                                                    <th class="text-end pe-4">Documento</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var fatura in Model.FaturasHistorico)
+                                                {
+                                                    <tr>
+                                                        <td class="ps-4">@fatura.DataCompra.ToString("dd/MM/yyyy")</td>
+                                                        <td>
+                                                            @fatura.IdAnuncioNavigation?.IdCarroNavigation?.IdModeloNavigation?.Nome
+                                                            <small class="text-muted d-block">Ref: #@fatura.Id</small>
+                                                        </td>
+                                                        <td class="fw-bold text-dark">@fatura.Valor.ToString("N0") €</td>
+                                                        <td><span class="badge bg-success rounded-pill"><i class="bi bi-check2"></i> Pago</span></td>
+                                                        <td class="text-end pe-4">
+                                                            <button class="btn btn-sm btn-outline-secondary border-0">
+                                                                <i class="bi bi-file-earmark-pdf-fill text-danger fs-5"></i>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="text-center py-5 text-muted">
+                                        <i class="bi bi-receipt fs-1"></i>
+                                        <p class="mt-2">Sem faturas para apresentar.</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade show active" id="pills-definicoes" role="tabpanel" aria-labelledby="pills-definicoes-tab">
+                <div class="row g-4 justify-content-center">
+                    <div class="col-md-5">
+                        <div class="card shadow-sm border-0 h-100 action-card" data-bs-toggle="collapse" data-bs-target="#collapsePerfil" style="cursor: pointer;">
+                            <div class="card-body p-0">
+                                <div class="icon-circle mb-3"><i class="bi bi-person"></i></div>
+                                <h5 class="text-primary fw-bold">Editar Dados Pessoais</h5>
+                                <p class="text-muted small mb-0">Nome, Email, Telemóvel e Morada</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="card shadow-sm border-0 h-100 action-card" data-bs-toggle="collapse" data-bs-target="#collapseSecurity" style="cursor: pointer;">
+                            <div class="card-body p-0">
+                                <div class="icon-circle mb-3" style="background-color: #6c757d;"><i class="bi bi-shield-lock"></i></div>
+                                <h5 class="text-secondary fw-bold">Segurança & Password</h5>
+                                <p class="text-muted small mb-0">Alterar senha e Autenticação 2FA</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapse mt-4" id="collapsePerfil" data-bs-parent="#pills-definicoes">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-5">
+                            <h4 class="fw-bold mb-4 text-primary"><i class="bi bi-person-lines-fill"></i> Os teus dados</h4>
+                            <form id="profile-form" method="post" asp-page-handler="UpdateProfile">
+                                <div class="row g-3">
+                                    <div class="col-md-12"><h6 class="text-muted border-bottom pb-2">Informação de Conta</h6></div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="Input.Username" class="form-control" placeholder="Username" />
+                                            <label asp-for="Input.Username">Nome de Utilizador</label>
+                                            <span asp-validation-for="Input.Username" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input asp-for="Input.Email" class="form-control" placeholder="Email" />
+                                            <label asp-for="Input.Email">Email</label>
+                                            <span asp-validation-for="Input.Email" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <input asp-for="Input.PhoneNumber" class="form-control" placeholder="Telemóvel" />
+                                            <label asp-for="Input.PhoneNumber">Telemóvel</label>
+                                            <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12 mt-4"><h6 class="text-muted border-bottom pb-2">Localização</h6></div>
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <input asp-for="Input.Morada" class="form-control" placeholder="Rua..." />
+                                            <label asp-for="Input.Morada">Morada Completa</label>
+                                            <span asp-validation-for="Input.Morada" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input asp-for="Input.CodPostal" class="form-control" placeholder="CP" />
+                                            <label asp-for="Input.CodPostal">Cód. Postal</label>
+                                            <span asp-validation-for="Input.CodPostal" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <input asp-for="Input.Localidade" class="form-control" placeholder="Cidade" />
+                                            <label asp-for="Input.Localidade">Localidade</label>
+                                            <span asp-validation-for="Input.Localidade" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-floating">
+                                            <select asp-for="Input.Pais" class="form-select">
+                                                <option value="Portugal">Portugal</option>
+                                                <option value="Espanha">Espanha</option>
+                                                <option value="Franca">França</option>
+                                                <option value="Alemanha">Alemanha</option>
+                                            </select>
+                                            <label asp-for="Input.Pais">País</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4 text-end">
+                                    <button type="submit" class="btn btn-primary btn-lg px-5">Gravar Alterações</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="collapse mt-4" id="collapseSecurity" data-bs-parent="#pills-definicoes">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-5">
+                            <div class="row">
+                                <div class="col-md-6 border-end pe-md-4">
+                                    <h5 class="fw-bold mb-3"><i class="bi bi-key"></i> Alterar Password</h5>
+                                    <form id="password-form" method="post" asp-page-handler="ChangePassword">
+                                        <div class="form-floating mb-2">
+                                            <input asp-for="Input.OldPassword" class="form-control" placeholder="Atual" />
+                                            <label asp-for="Input.OldPassword">Password Atual</label>
+                                            <span asp-validation-for="Input.OldPassword" class="text-danger"></span>
+                                        </div>
+                                        <div class="form-floating mb-2">
+                                            <input asp-for="Input.NewPassword" class="form-control" placeholder="Nova" />
+                                            <label asp-for="Input.NewPassword">Nova Password</label>
+                                            <span asp-validation-for="Input.NewPassword" class="text-danger"></span>
+                                        </div>
+                                        <div class="form-floating mb-3">
+                                            <input asp-for="Input.ConfirmPassword" class="form-control" placeholder="Confirmar" />
+                                            <label asp-for="Input.ConfirmPassword">Confirmar Nova</label>
+                                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                                        </div>
+                                        <button type="submit" class="btn btn-dark w-100">Atualizar Password</button>
+                                    </form>
+                                </div>
+                                <div class="col-md-6 ps-md-4 mt-4 mt-md-0">
+                                    <h5 class="fw-bold mb-3"><i class="bi bi-shield-check"></i> Autenticação 2 Fatores</h5>
+                                    @if (Model.IsTwoFactorEnabled)
+                                    {
+                                        <div class="alert alert-success"><i class="bi bi-check-circle"></i> Proteção Ativada</div>
+                                        <form method="post" asp-page-handler="Disable2FA">
+                                            <button type="submit" class="btn btn-outline-danger w-100">Desativar 2FA</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <div class="alert alert-light border"><i class="bi bi-exclamation-circle"></i> Proteção Desativada</div>
+                                        <a asp-page="./EnableAuthenticator" class="btn btn-primary w-100">Configurar 2FA</a>
+                                    }
+                                    <hr class="my-4">
+                                    <h5 class="fw-bold text-danger mb-2"><i class="bi bi-trash"></i> Apagar Conta</h5>
+                                    <button class="btn btn-outline-danger btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDeleteConfirm">
+                                        Quero eliminar a minha conta
+                                    </button>
+                                    <div class="collapse mt-2" id="collapseDeleteConfirm">
+                                        <div class="card card-body bg-light border-danger">
+                                            <form method="post" asp-page-handler="DeleteAccount">
+                                                <small class="text-danger d-block mb-2">Esta ação é irreversível!</small>
+                                                <input asp-for="Input.DeletePassword" class="form-control form-control-sm mb-2" placeholder="Confirma a tua password" required />
+                                                <button type="submit" class="btn btn-danger btn-sm w-100">Confirmar Eliminação</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button type="submit" class="btn btn-link text-muted text-decoration-none">
+                <i class="bi bi-box-arrow-left"></i> Terminar Sessão
+            </button>
+        </form>
+    </div>
+
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        var dashboardInterval = null;
+        var dashboardUrlAtual = "";
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var mainTabButtons = [].slice.call(document.querySelectorAll('#pills-tab button'));
+            mainTabButtons.forEach(function (triggerEl) {
+                triggerEl.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    mainTabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    if (dashboardInterval) clearInterval(dashboardInterval);
+                    document.querySelectorAll('#pills-tabContent > .tab-pane').forEach(pane => {
+                        pane.classList.remove('show', 'active');
+                    });
+                    var targetSelector = this.getAttribute('data-bs-target');
+                    var targetPane = document.querySelector(targetSelector);
+                    if (targetPane) targetPane.classList.add('show', 'active');
+                });
+            });
+
+            var subTabButtons = [].slice.call(document.querySelectorAll('.nav-pills button'));
+            subTabButtons.forEach(function (triggerEl) {
+                if (triggerEl.id.startsWith('pills-anuncios') || triggerEl.id.startsWith('pills-mensagens') || triggerEl.id.startsWith('pills-pagamentos') || triggerEl.id.startsWith('pills-definicoes')) return;
+                triggerEl.addEventListener('click', function (event) {
+                    event.preventDefault();
+                    var parentNav = this.closest('ul.nav');
+                    parentNav.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    var contentContainer = parentNav.nextElementSibling;
+                    contentContainer.querySelectorAll('.tab-pane').forEach(pane => {
+                        pane.classList.remove('show', 'active');
+                    });
+                    var targetSelector = this.getAttribute('data-bs-target');
+                    var targetPane = document.querySelector(targetSelector);
+                    if (targetPane) targetPane.classList.add('show', 'active');
+                });
+            });
+        });
+
+        function perguntarTornarVendedor() {
+            Swal.fire({
+                title: 'Queres vender o teu carro?',
+                text: "Para criar anúncios, precisas de ter uma conta de Vendedor.",
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonColor: '#0d6efd',
+                confirmButtonText: 'Sim',
+                cancelButtonText: 'Não'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = '@Url.Action("TornarVendedor", "Vendedores")';
+                }
+            });
+        }
+
+        function carregarListaMensagens() {
+            if (dashboardInterval) clearInterval(dashboardInterval);
+
+            var containerLista = document.getElementById("viewListaMensagens");
+            var containerChat = document.getElementById("viewChatAtivo");
+            var loader = document.getElementById("loaderMsg");
+
+            containerChat.style.display = "none";
+            containerLista.style.display = "block";
+            loader.style.display = "block";
+            containerLista.innerHTML = "";
+
+            var url = '/Mensagens/Index?v=' + new Date().getTime();
+
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    loader.style.display = "none";
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+                    var lista = doc.querySelector('.list-group');
+
+                    if (lista) {
+                        var links = lista.querySelectorAll('a');
+                        links.forEach(link => {
+                            var href = link.getAttribute('href');
+                            var urlParams = new URLSearchParams(href.split('?')[1]);
+                            var outroId = urlParams.get('outroUserId');
+                            var anuncioId = urlParams.get('anuncioId') || '';
+
+                            link.removeAttribute('href');
+                            link.classList.add('msg-preview');
+                            link.style.cursor = 'pointer';
+                            link.onclick = function () { abrirConversa(outroId, anuncioId); };
+                        });
+                        containerLista.appendChild(lista);
+                    } else {
+                        containerLista.innerHTML = '<p class="text-center text-muted py-3">Ainda não tens mensagens.</p>';
+                    }
+                })
+                .catch(err => {
+                    loader.style.display = "none";
+                    containerLista.innerHTML = '<p class="text-danger text-center">Erro ao carregar.</p>';
+                });
+        }
+
+        function abrirConversa(userId, anuncioId) {
+            var containerLista = document.getElementById("viewListaMensagens");
+            var containerChat = document.getElementById("viewChatAtivo");
+            var loader = document.getElementById("loaderMsg");
+
+            containerLista.style.display = "none";
+            loader.style.display = "block";
+
+            dashboardUrlAtual = `/Mensagens/ChatPartial?outroUserId=${userId}&anuncioId=${anuncioId}`;
+            var url = dashboardUrlAtual + "&v=" + new Date().getTime();
+
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    loader.style.display = "none";
+                    containerChat.innerHTML = html;
+
+                    var card = containerChat.querySelector('.card');
+                    if (card) {
+                        card.classList.remove('border-0', 'shadow-sm');
+                        card.classList.add('h-100');
+                    }
+
+                    var btnVoltarPartial = containerChat.querySelector('button.d-md-none');
+                    if (btnVoltarPartial) {
+                        btnVoltarPartial.setAttribute('onclick', 'voltarParaLista()');
+                        btnVoltarPartial.classList.remove('d-md-none');
+                    }
+
+                    containerChat.style.display = "block";
+
+                    scrollParaFundo();
+
+                    if (dashboardInterval) clearInterval(dashboardInterval);
+                    dashboardInterval = setInterval(atualizarChatDashboard, 3000);
+                })
+                .catch(err => {
+                    loader.style.display = "none";
+                    alert("Erro ao abrir conversa.");
+                    containerLista.style.display = "block";
+                });
+        }
+
+        function atualizarChatDashboard() {
+            var containerChat = document.getElementById("viewChatAtivo");
+            if (containerChat.style.display === "none") {
+                clearInterval(dashboardInterval);
+                return;
+            }
+
+            var url = dashboardUrlAtual + "&v=" + new Date().getTime();
+
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+
+                    var novaListaMsg = doc.getElementById('chatBox');
+
+                    if (!novaListaMsg) novaListaMsg = doc.querySelector('.card-body');
+
+                    var chatBoxAtual = document.getElementById('chatBox');
+
+                    if (!chatBoxAtual) chatBoxAtual = containerChat.querySelector('.card-body');
+
+                    if (novaListaMsg && chatBoxAtual) {
+
+                        if (chatBoxAtual.innerHTML.trim() !== novaListaMsg.innerHTML.trim()) {
+                            chatBoxAtual.innerHTML = novaListaMsg.innerHTML;
+
+                            setTimeout(scrollParaFundo, 50);
+                        }
+                    }
+                })
+                .catch(console.error);
+        }
+
+        function scrollParaFundo() {
+            var chatBox = document.getElementById("chatBox") || document.querySelector('#viewChatAtivo .card-body');
+            if (chatBox) {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        }
+
+        function voltarParaLista() {
+            if (dashboardInterval) clearInterval(dashboardInterval);
+            document.getElementById("viewChatAtivo").style.display = "none";
+            document.getElementById("viewListaMensagens").style.display = "block";
+            carregarListaMensagens();
+        }
+
+        function enviarMensagemInterna(e) {
+            e.preventDefault();
+            var txtInput = document.getElementById("txtMensagemInterno");
+            var texto = txtInput.value;
+            var destId = document.getElementById("destinatarioIdInterno").value;
+            var anuncioId = document.getElementById("anuncioIdInterno").value;
+
+            if (!texto.trim()) return;
+
+            var dados = new FormData();
+            dados.append("destinatarioId", destId);
+            dados.append("conteudo", texto);
+            if (anuncioId) dados.append("anuncioId", anuncioId);
+
+            txtInput.disabled = true;
+
+            fetch('/Mensagens/Enviar', { method: 'POST', body: dados })
+                .then(r => r.json())
+                .then(data => {
+                    txtInput.disabled = false;
+                    if (data.success) {
+                        txtInput.value = "";
+                        txtInput.focus();
+                        setTimeout(atualizarChatDashboard, 100);
+                        setTimeout(scrollParaFundo, 300);
+                    } else {
+                        alert("Erro: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    txtInput.disabled = false;
+                    alert("Erro ao enviar mensagem.");
+                });
+        }
+    </script>
+}

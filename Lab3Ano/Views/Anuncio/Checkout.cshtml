@@ -1,0 +1,171 @@
+﻿@model Lab.Models.CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Checkout Seguro";
+}
+
+<style>
+    .checkout-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .car-summary-bg {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+    }
+
+    /* Esconder o botão de rádio nativo feio */
+    .payment-option-input {
+        display: none;
+    }
+
+    /* Estilo do cartão de pagamento */
+    .payment-option-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px;
+        border: 2px solid #dee2e6;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background-color: white;
+        margin-bottom: 12px;
+    }
+
+        .payment-option-label:hover {
+            border-color: #adb5bd;
+            background-color: #f8f9fa;
+        }
+
+    /* O que acontece quando selecionado */
+    .payment-option-input:checked + .payment-option-label {
+        border-color: #198754; /* Cor verde sucesso */
+        background-color: #f0fdf4;
+        box-shadow: 0 4px 12px rgba(25, 135, 84, 0.15);
+    }
+
+        .payment-option-input:checked + .payment-option-label .check-circle {
+            background-color: #198754;
+            border-color: #198754;
+            color: white;
+        }
+
+    .check-circle {
+        width: 24px;
+        height: 24px;
+        border: 2px solid #adb5bd;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        transition: all 0.2s;
+    }
+
+        .check-circle i {
+            font-size: 14px;
+            display: none; /* Escondido por defeito */
+        }
+
+    .payment-option-input:checked + .payment-option-label .check-circle i {
+        display: block; /* Mostra o check quando selecionado */
+    }
+
+    .btn-pay {
+        padding: 15px;
+        font-size: 1.1rem;
+        border-radius: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+
+            <div class="text-center mb-4">
+                <h2 class="fw-bold text-dark">Finalizar Compra</h2>
+                <p class="text-muted">Complete o pagamento para reservar a sua viatura.</p>
+            </div>
+
+            <div class="card checkout-card bg-white">
+                <div class="card-body p-4 p-md-5">
+
+                    <div class="car-summary-bg p-4 mb-4 text-center">
+                        <p class="text-uppercase text-muted small fw-bold mb-1">Está a adquirir</p>
+                        <h3 class="fw-bold text-dark mb-0">@Model.Titulo</h3>
+                        <div class="mt-3">
+                            <span class="display-4 fw-bold text-success">@Model.Preco.ToString("N0") €</span>
+                        </div>
+                    </div>
+
+                    <form asp-action="ConfirmarCompra" method="post">
+                        <input type="hidden" asp-for="IdAnuncio" />
+
+                        <h5 class="fw-bold mb-3 mt-4">Método de Pagamento</h5>
+
+                        <input type="radio" class="payment-option-input" asp-for="MetodoPagamento" value="MB Way" id="pay_mbway" checked>
+                        <label class="payment-option-label" for="pay_mbway">
+                            <div class="d-flex align-items-center">
+                                <div class="check-circle"><i class="bi bi-check-lg"></i></div>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">MB Way</span>
+                                    <span class="small text-muted">Aprovação instantânea no telemóvel</span>
+                                </div>
+                            </div>
+                            <i class="bi bi-phone fs-3 text-danger"></i>
+                        </label>
+
+                        <input type="radio" class="payment-option-input" asp-for="MetodoPagamento" value="Multibanco" id="pay_mb">
+                        <label class="payment-option-label" for="pay_mb">
+                            <div class="d-flex align-items-center">
+                                <div class="check-circle"><i class="bi bi-check-lg"></i></div>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">Multibanco</span>
+                                    <span class="small text-muted">Pagamento via Entidade e Referência</span>
+                                </div>
+                            </div>
+                            <i class="bi bi-credit-card-2-front fs-3 text-primary"></i>
+                        </label>
+
+                        <input type="radio" class="payment-option-input" asp-for="MetodoPagamento" value="Cartão de Crédito" id="pay_cc">
+                        <label class="payment-option-label" for="pay_cc">
+                            <div class="d-flex align-items-center">
+                                <div class="check-circle"><i class="bi bi-check-lg"></i></div>
+                                <div>
+                                    <span class="d-block fw-bold text-dark">Cartão de Crédito</span>
+                                    <span class="small text-muted">Visa ou Mastercard</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <i class="bi bi-credit-card fs-3 text-warning"></i>
+                            </div>
+                        </label>
+
+                        <div class="d-grid gap-3 mt-5">
+                            <button type="submit" class="btn btn-success btn-pay shadow-sm">
+                                <i class="bi bi-lock-fill me-2"></i> Pagar @Model.Preco.ToString("N0") €
+                            </button>
+
+                            <a asp-action="Details" asp-controller="Anuncio" asp-route-id="@Model.IdAnuncio"
+                               class="btn btn-link text-muted text-decoration-none">
+                                Cancelar e voltar ao anúncio
+                            </a>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+            <div class="text-center mt-4 text-muted small">
+                <i class="bi bi-shield-lock-fill text-success"></i> Pagamento processado em ambiente seguro (Simulação Académica)
+            </div>
+
+        </div>
+    </div>
+</div>

@@ -1,0 +1,210 @@
+﻿@model Lab3Ano.Models.Entidades.Anuncio
+
+@{
+    ViewData["Title"] = "Editar Anúncio";
+    var carro = Model.IdCarroNavigation;
+}
+
+<div class="container py-5">
+    <div class="card p-4 shadow-sm border-warning">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="text-warning fw-bold mb-0">Gerir Anúncio</h2>
+                <small class="text-muted">Apenas o estado, preço e multimédia podem ser alterados.</small>
+            </div>
+            <span class="badge bg-warning text-dark px-3 py-2">Modo de Edição</span>
+        </div>
+
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="id" value="@Model.Id" />
+
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <label class="fw-bold">Título do Anúncio</label>
+                    <input type="text" name="Titulo" class="form-control fw-bold" value="@Model.Titulo" required />
+                </div>
+                <div class="col-md-4">
+                    <label class="fw-bold">Estado Atual</label>
+                    <select name="Estado" class="form-select fw-bold text-center"
+                            style="background-color: @(Model.Estado == "Ativo" ? "#d1e7dd" : (Model.Estado == "Reservado" ? "#fff3cd" : "#f8d7da"));">
+
+                        <option value="Ativo" selected="@(Model.Estado == "Ativo")">🟢 ATIVO</option>
+
+                        <option value="Reservado" selected="@(Model.Estado == "Reservado")">🟡 RESERVADO</option>
+
+                        <option value="Pausado" selected="@(Model.Estado == "Pausado")">🔴 PAUSADO</option>
+                        <option value="Vendido" selected="@(Model.Estado == "Vendido")">⚫ VENDIDO</option>
+
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="fw-bold text-success">Preço de Venda (€)</label>
+                <div class="input-group">
+                    <input type="text" name="preco" class="form-control fw-bold fs-4 text-success" value="@carro.Preco" required />
+                    <span class="input-group-text">€</span>
+                </div>
+            </div>
+
+            <div class="card bg-light border-0 mb-4">
+                <div class="card-body">
+                    <h6 class="card-title fw-bold text-muted border-bottom pb-2"><i class="bi bi-car-front-fill"></i> Detalhes do Veículo (Fixo)</h6>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Marca</small>
+                            <span class="fw-bold">@(carro.IdModeloNavigation?.IdMarcaNavigation?.Nome ?? "-")</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Modelo</small>
+                            <span class="fw-bold">@(carro.IdModeloNavigation?.Nome ?? "-")</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">Ano</small>
+                            <span>@carro.Ano</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">Combustível</small>
+                            <span>@(carro.IdCombustivelNavigation?.Tipo ?? "-")</span>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted d-block">Caixa</small>
+                            <span>@carro.Caixa</span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Quilometragem</small>
+                            <span>@carro.Quilometragem km</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Potência</small>
+                            <span>@carro.Potencia CV</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Cilindrada</small>
+                            <span>@carro.Cilindrada cm³</span>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block">Categoria</small>
+                            <span>@(carro.IdCategoriaNavigation?.Nome ?? "-")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="fw-bold">Descrição do Vendedor</label>
+                <textarea name="descricao" class="form-control" rows="5">@Model.Descricao</textarea>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="mb-4">
+                <label class="fw-bold mb-2">Fotos Atuais</label>
+                <div class="d-flex gap-2 flex-wrap p-3 bg-light rounded border">
+                    @if (Model.Imagems != null && Model.Imagems.Any())
+                    {
+                        @foreach (var img in Model.Imagems)
+                        {
+                            <div id="container-foto-@img.Id" class="position-relative shadow-sm" style="width: 120px; height: 90px;">
+                                <img src="/imagens/@img.Url" class="w-100 h-100 object-fit-cover rounded border">
+                                <button type="button"
+                                        class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 d-flex justify-content-center align-items-center"
+                                        style="width: 24px; height: 24px; transform: translate(30%, -30%); border-radius: 50%;"
+                                        onclick="apagarFotoExistente(@img.Id)">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted fst-italic w-100">Este anúncio não tem fotos antigas.</p>
+                    }
+                </div>
+            </div>
+
+            <div class="mb-4 bg-white p-4 border border-2 border-warning rounded border-opacity-25">
+                <label class="fw-bold text-warning mb-3"><i class="bi bi-cloud-upload-fill"></i> Adicionar Novas Fotos</label>
+
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn btn-outline-warning text-dark fw-bold" onclick="document.getElementById('inputFotosEscondido').click()">
+                        <i class="bi bi-plus-lg"></i> Selecionar Fotos
+                    </button>
+                    <button type="button" class="btn btn-light border" onclick="limparNovasFotos()">
+                        Limpar Seleção
+                    </button>
+                </div>
+
+                <input type="file" id="inputFotosEscondido" name="novasFotos"
+                       class="d-none" multiple accept="image/*" onchange="novasFotosSelecionadas(this)" />
+
+                <p class="text-muted small">Novas a adicionar: <span id="contadorFotos" class="fw-bold text-dark">0</span></p>
+                <div id="previewContainer" class="d-flex gap-2 overflow-auto py-2" style="white-space: nowrap;"></div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning w-100 fw-bold btn-lg shadow-sm">GUARDAR ALTERAÇÕES</button>
+
+                <button type="submit" asp-action="Delete" class="btn btn-danger w-100 btn-lg shadow-sm" formnovalidate
+                        onclick="return confirm('ATENÇÃO: Tem a certeza absoluta que quer apagar este anúncio?\n\nEsta ação é irreversível!');">
+                    <i class="bi bi-trash"></i> APAGAR ANÚNCIO
+                </button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary w-100 btn-lg">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const dt = new DataTransfer();
+        function novasFotosSelecionadas(input) {
+            const files = input.files;
+            const previewContainer = document.getElementById("previewContainer");
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                dt.items.add(file);
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.createElement("img");
+                    img.src = e.target.result;
+                    img.className = "rounded border shadow-sm me-2";
+                    img.style.width = "100px";
+                    img.style.height = "100px";
+                    img.style.objectFit = "cover";
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+            input.files = dt.files;
+            document.getElementById("contadorFotos").innerText = dt.files.length;
+        }
+
+        function limparNovasFotos() {
+            dt.items.clear();
+            document.getElementById("inputFotosEscondido").value = "";
+            document.getElementById("previewContainer").innerHTML = "";
+            document.getElementById("contadorFotos").innerText = "0";
+        }
+
+        function apagarFotoExistente(idImagem) {
+            if (!confirm("Tem a certeza que quer apagar esta foto permanentemente?")) return;
+            fetch(`/Anuncio/RemoverFoto/${idImagem}`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    const el = document.getElementById(`container-foto-${idImagem}`);
+                    if (el) el.remove();
+                } else {
+                    alert("Erro ao apagar: " + (data.message || "Erro desconhecido"));
+                }
+            })
+            .catch(e => alert("Erro de comunicação."));
+        }
+    </script>
+}

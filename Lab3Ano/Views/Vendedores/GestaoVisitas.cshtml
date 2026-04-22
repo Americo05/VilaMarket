@@ -1,0 +1,101 @@
+﻿@model IEnumerable<Lab3Ano.Models.Entidades.Visita>
+
+@{
+    ViewData["Title"] = "Gestão de Visitas";
+}
+
+<div class="container py-5">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h4 class="mb-0 fw-bold text-primary"><i class="bi bi-calendar-check-fill"></i> Pedidos de Visita</h4>
+        </div>
+
+        <div class="card-body p-0">
+            @if (!Model.Any())
+            {
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-inbox fs-1"></i>
+                    <p class="mt-2">Não tens pedidos de visita pendentes.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-secondary small text-uppercase">
+                            <tr>
+                                <th class="ps-4">Carro</th>
+                                <th>Cliente</th>
+                                <th>Data Preferida</th>
+                                <th>Notas</th>
+                                <th>Estado</th>
+                                <th class="text-end pe-4">Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var visita in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4">
+                                        <a asp-controller="Anuncio" asp-action="Details" asp-route-id="@visita.IdAnuncio" class="fw-bold text-decoration-none">
+                                            @visita.IdAnuncioNavigation?.Titulo
+                                        </a>
+                                    </td>
+                                    <td>
+                                        @(visita.IdCompradorNavigation?.User?.UserName ?? "Cliente #" + visita.IdComprador)
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-bold">@visita.DataHora.ToString("dd/MM/yyyy")</span>
+                                            <small class="text-muted">às @visita.DataHora.ToString("HH:mm")</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        @if (visita.Estado == "Pendente")
+                                        {
+                                            <span class="badge bg-warning text-dark rounded-pill">Pendente</span>
+                                        }
+                                        else if (visita.Estado == "Aceite")
+                                        {
+                                            <span class="badge bg-success rounded-pill">Confirmada</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger rounded-pill">Rejeitada</span>
+                                        }
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        @if (visita.Estado == "Pendente")
+                                        {
+                                            <div class="d-flex justify-content-end gap-2">
+                                                <form asp-action="AtualizarEstadoVisita" method="post">
+                                                    <input type="hidden" name="idVisita" value="@visita.Id" />
+                                                    <input type="hidden" name="novoEstado" value="Aceite" />
+                                                    <button type="submit" class="btn btn-success btn-sm fw-bold shadow-sm" title="Confirmar Visita">
+                                                        <i class="bi bi-check-lg"></i> Aceitar
+                                                    </button>
+                                                </form>
+
+                                                <form asp-action="AtualizarEstadoVisita" method="post">
+                                                    <input type="hidden" name="idVisita" value="@visita.Id" />
+                                                    <input type="hidden" name="novoEstado" value="Rejeitada" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm shadow-sm" title="Recusar">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small"><i class="bi bi-lock"></i> Fechado</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

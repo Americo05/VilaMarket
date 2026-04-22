@@ -1,0 +1,286 @@
+﻿@model Lab3Ano.Models.ViewModels.CreateAnuncioViewModel
+@{
+    ViewData["Title"] = "Criar Anúncio";
+}
+
+<div class="container py-5">
+    <div class="card p-4 shadow-sm">
+        <h2 class="mb-4 text-primary fw-bold">Vender Carro</h2>
+        <p class="text-muted mb-4">Preencha os dados passo a passo para desbloquear os campos.</p>
+
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+
+            <div class="mb-3">
+                <label class="fw-bold">1. Marca</label>
+                <select name="idMarca" id="ddlMarca" class="form-select" asp-items="ViewBag.IdMarca" required>
+                    <option value="">-- Selecione a Marca --</option>
+                </select>
+                <div class="invalid-feedback">Tens de selecionar a Marca!</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">2. Modelo</label>
+                <select name="idModelo" id="ddlModelo" class="form-select" disabled required>
+                    <option value="">-- Aguardando Marca --</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">3. Categoria</label>
+                <select name="idCategoria" id="ddlCategoria" class="form-select" asp-items="ViewBag.IdCategoria" disabled required>
+                    <option value="">-- Aguardando Modelo --</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">4. Combustível</label>
+                <select name="idCombustivel" id="ddlCombustivel" class="form-select" asp-items="ViewBag.IdCombustivel" disabled required>
+                    <option value="">-- Aguardando Categoria --</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">5. Caixa de Velocidades</label>
+                <select name="caixa" id="ddlCaixa" class="form-select" disabled required>
+                    <option value="">-- Aguardando Combustível --</option>
+                    <option value="Manual">Manual</option>
+                    <option value="Automática">Automática</option>
+                </select>
+            </div>
+
+            <hr class="my-4" />
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="fw-bold">Ano</label>
+                    <input type="number" name="ano" class="form-control" placeholder="Ex: 2020" required />
+                    <span asp-validation-for="Ano" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="fw-bold">Quilómetros</label>
+                    <input type="number" name="quilometragem" class="form-control" placeholder="Ex: 150000" required />
+                    <span asp-validation-for="Quilometragem" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="fw-bold">Potência</label>
+                    <div class="input-group">
+                        <input asp-for="Potencia" class="form-control" type="number" placeholder="Ex: 150" required />
+                        <span class="input-group-text">CV</span>
+                    </div>
+                    <span asp-validation-for="Potencia" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label class="fw-bold">Cilindrada</label>
+                    <div class="input-group">
+                        <input asp-for="Cilindrada" class="form-control" type="number" placeholder="Ex: 2000" required />
+                        <span class="input-group-text">cm³</span>
+                    </div>
+                    <span asp-validation-for="Cilindrada" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-bold">Descrição do Anúncio</label>
+                <textarea name="descricao" class="form-control" rows="3" placeholder="Descreva os detalhes do carro..." required></textarea>
+                <span asp-validation-for="Descricao" class="text-danger"></span>
+            </div>
+
+            <div class="mb-4 bg-light p-4 border rounded">
+                <label class="fw-bold fs-5 mb-3">Fotografias da Viatura</label>
+
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('inputFotosEscondido').click()">
+                        <i class="bi bi-plus-circle"></i> Adicionar Fotos
+                    </button>
+
+                    <button type="button" class="btn btn-danger" onclick="limparTodasFotos()">
+                        <i class="bi bi-trash"></i> Limpar Tudo
+                    </button>
+                </div>
+
+                <input type="file" id="inputFotosEscondido" name="ficheiros"
+                       class="d-none" multiple accept="image/*" onchange="novasFotosSelecionadas(this)" />
+
+                <p class="text-muted small">
+                    Total selecionado: <span id="contadorFotos" class="fw-bold text-dark">0</span> fotos.
+                </p>
+
+                <div id="previewCarousel" class="carousel slide d-none" data-bs-ride="false">
+                    <div class="carousel-inner" id="listaSlides">
+                    </div>
+
+                    <button class="carousel-control-prev" type="button" data-bs-target="#previewCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon bg-dark rounded-circle p-3" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#previewCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon bg-dark rounded-circle p-3" aria-hidden="true"></span>
+                        <span class="visually-hidden">Próximo</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="fw-bold fs-5">Preço (€)</label>
+                <input type="number" name="preco" class="form-control form-control-lg border-success" step="any" placeholder="0,00" required />
+                <span asp-validation-for="Preco" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 btn-lg fw-bold">PUBLICAR ANÚNCIO</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // --- MAPEAMENTO DOS ELEMENTOS ---
+        const ddlMarca = document.getElementById("ddlMarca");
+        const ddlModelo = document.getElementById("ddlModelo");
+        const ddlCategoria = document.getElementById("ddlCategoria");
+        const ddlCombustivel = document.getElementById("ddlCombustivel");
+        const ddlCaixa = document.getElementById("ddlCaixa");
+
+        // --- LÓGICA PASSO A PASSO ---
+
+        // 1. MARCA -> MODELO (Via AJAX)
+        ddlMarca.addEventListener("change", function () {
+            const idMarca = this.value;
+
+            // Resetar tudo para a frente se mudar a marca
+            resetDropdown(ddlModelo, "-- Aguardando Marca --");
+            resetDropdown(ddlCategoria, "-- Aguardando Modelo --");
+            resetDropdown(ddlCombustivel, "-- Aguardando Categoria --");
+            resetDropdown(ddlCaixa, "-- Aguardando Combustível --");
+
+            if (idMarca) {
+                ddlModelo.innerHTML = '<option>A carregar...</option>';
+
+                fetch(`/Anuncio/ObterModelosPorMarca?idMarca=${idMarca}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        ddlModelo.innerHTML = '<option value="">-- Selecione o Modelo --</option>';
+                        data.forEach(m => {
+                            let opt = document.createElement("option");
+                            opt.value = m.id;
+                            opt.text = m.nome;
+                            ddlModelo.appendChild(opt);
+                        });
+                        ddlModelo.disabled = false; // Desbloqueia Modelo
+                    })
+                    .catch(e => console.error(e));
+            }
+        });
+
+        // 2. MODELO -> CATEGORIA
+        ddlModelo.addEventListener("change", function() {
+            if (this.value) {
+                ddlCategoria.disabled = false;
+                ddlCategoria.options[0].text = "-- Selecione a Categoria --";
+            } else {
+                resetDropdown(ddlCategoria, "-- Aguardando Modelo --");
+                resetDropdown(ddlCombustivel, "-- Aguardando Categoria --");
+                resetDropdown(ddlCaixa, "-- Aguardando Combustível --");
+            }
+        });
+
+        // 3. CATEGORIA -> COMBUSTÍVEL
+        ddlCategoria.addEventListener("change", function() {
+            if (this.value) {
+                ddlCombustivel.disabled = false;
+                ddlCombustivel.options[0].text = "-- Selecione o Combustível --";
+            } else {
+                resetDropdown(ddlCombustivel, "-- Aguardando Categoria --");
+                resetDropdown(ddlCaixa, "-- Aguardando Combustível --");
+            }
+        });
+
+        // 4. COMBUSTÍVEL -> CAIXA
+        ddlCombustivel.addEventListener("change", function() {
+            if (this.value) {
+                ddlCaixa.disabled = false;
+                ddlCaixa.options[0].text = "-- Selecione a Caixa --";
+            } else {
+                resetDropdown(ddlCaixa, "-- Aguardando Combustível --");
+            }
+        });
+
+        // Função auxiliar para limpar e bloquear campos
+        function resetDropdown(element, defaultText) {
+            element.value = "";
+            element.disabled = true;
+            // Se for o Modelo, limpamos as options, se for os outros (que vêm do ViewBag), mantemos as options mas mudamos o texto default
+            if(element.id === "ddlModelo") {
+                element.innerHTML = `<option value="">${defaultText}</option>`;
+            } else {
+                element.options[0].text = defaultText;
+            }
+        }
+        const dt = new DataTransfer();
+
+            function novasFotosSelecionadas(input) {
+                const files = input.files;
+                const listaSlides = document.getElementById("listaSlides");
+                const carrossel = document.getElementById("previewCarousel");
+
+                // 1. Adicionar os NOVOS ficheiros à nossa caixa mágica (dt)
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    dt.items.add(file); // Adiciona sem apagar os antigos
+
+                    // Criar o Slide para o Carrossel
+                    criarSlide(file, dt.items.length - 1);
+                }
+
+                // 2. Atualizar o Input verdadeiro com TUDO o que temos na caixa
+                input.files = dt.files;
+
+                // 3. Atualizar contador e mostrar carrossel
+                atualizarInterface();
+            }
+
+            function criarSlide(file, index) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    // Criar HTML do slide
+                    const div = document.createElement("div");
+                    // O primeiro slide tem de ter a classe 'active'
+                    div.className = index === 0 && document.querySelectorAll('.carousel-item').length === 0
+                                    ? "carousel-item active"
+                                    : "carousel-item";
+
+                    div.innerHTML = `
+                        <div class="d-flex justify-content-center bg-dark rounded" style="height: 300px;">
+                            <img src="${e.target.result}" class="d-block h-100" style="object-fit: contain;">
+                            <div class="carousel-caption d-none d-md-block p-1 bg-dark bg-opacity-50 rounded">
+                                <p class="mb-0 small">${file.name}</p>
+                            </div>
+                        </div>
+                    `;
+                    document.getElementById("listaSlides").appendChild(div);
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function limparTodasFotos() {
+                dt.items.clear(); // Limpa a memória
+                document.getElementById("inputFotosEscondido").value = ""; // Limpa o input
+                document.getElementById("listaSlides").innerHTML = ""; // Limpa visualmente
+                atualizarInterface();
+            }
+
+            function atualizarInterface() {
+                const total = dt.files.length;
+                document.getElementById("contadorFotos").innerText = total;
+
+                const carrossel = document.getElementById("previewCarousel");
+                if (total > 0) {
+                    carrossel.classList.remove("d-none");
+                } else {
+                    carrossel.classList.add("d-none");
+                }
+            }
+    </script>
+}

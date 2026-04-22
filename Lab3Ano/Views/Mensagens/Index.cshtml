@@ -1,0 +1,82 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject UserManager<IdentityUser> UserManager
+@model IEnumerable<Lab3Ano.Models.Entidades.Mensagem>
+
+@{
+    ViewData["Title"] = "As minhas mensagens";
+    var meuId = UserManager.GetUserId(User);
+}
+
+<div class="container py-5">
+
+    <div class="mb-4">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm border-0 bg-white">
+            <i class="bi bi-arrow-left me-2"></i>Voltar à Página Inicial
+        </a>
+    </div>
+
+    <h2 class="fw-bold mb-4"><i class="bi bi-chat-square-text-fill text-primary"></i> Caixa de Entrada</h2>
+
+    <div class="card shadow-sm border-0">
+        <div class="list-group list-group-flush">
+            @if (!Model.Any())
+            {
+                <div class="p-5 text-center text-muted">
+                    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                    <h5>Não tens mensagens novas.</h5>
+                    <p>Contacta um vendedor para iniciar uma conversa!</p>
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-primary mt-2">Ver Carros</a>
+                </div>
+            }
+            else
+            {
+                @foreach (var msg in Model)
+                {
+                    var souEuORemetente = msg.RemetenteId == meuId;
+                    var outroUserId = souEuORemetente ? msg.DestinatarioId : msg.RemetenteId;
+                    var outroUserName = souEuORemetente ? msg.Destinatario.UserName : msg.Remetente.UserName;
+                    var porLer = !souEuORemetente && !msg.Lida;
+
+                    <a asp-action="Chat" asp-route-outroUserId="@outroUserId" asp-route-anuncioId="@msg.AnuncioId"
+                       class="list-group-item list-group-item-action p-4 d-flex align-items-center @(porLer ? "bg-light border-start border-5 border-primary" : "")">
+
+                        <div class="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+                             style="width: 50px; height: 50px; flex-shrink: 0;">
+                            <span class="fs-4 text-uppercase">@outroUserName.Substring(0, 1)</span>
+                        </div>
+
+                        <div class="flex-grow-1 overflow-hidden">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="mb-1 fw-bold text-truncate">@outroUserName</h6>
+                                <small class="text-muted text-nowrap">@msg.DataEnvio.ToString("dd/MM HH:mm")</small>
+                            </div>
+
+                            @if (msg.Anuncio != null)
+                            {
+                                <div class="small text-primary fw-bold mb-1">
+                                    <i class="bi bi-car-front-fill me-1"></i>
+                                    @msg.Anuncio.IdCarroNavigation?.IdModeloNavigation?.IdMarcaNavigation?.Nome
+                                    @msg.Anuncio.IdCarroNavigation?.IdModeloNavigation?.Nome
+                                    <span class="text-muted fw-normal ms-1">(Ref: #@msg.AnuncioId)</span>
+                                </div>
+                            }
+
+                            <p class="mb-0 text-muted text-truncate small">
+                                @if (souEuORemetente)
+                                {
+                                    <i class="bi bi-reply-fill me-1"></i>
+                                }
+                                @msg.Conteudo
+                            </p>
+                        </div>
+
+                        @if (porLer)
+                        {
+                            <span class="badge bg-primary rounded-pill ms-3">Nova</span>
+                        }
+                    </a>
+                }
+            }
+        </div>
+    </div>
+</div>

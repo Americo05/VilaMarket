@@ -1,0 +1,88 @@
+﻿@page
+@model EnableAuthenticatorModel
+@{
+    ViewData["Title"] = "Configurar Autenticação";
+    // TRUQUE: Forçar o layout principal para matar a barra lateral
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            <div class="text-center mb-4">
+                <h2 class="fw-bold">Configurar Autenticação de Dois Fatores (2FA)</h2>
+                <p class="text-muted">Segue os passos abaixo para proteger a tua conta.</p>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+
+                    <div class="mb-4 border-bottom pb-4">
+                        <h5 class="fw-bold text-primary">Passo 1: Instalar a App</h5>
+                        <p>Descarrega uma aplicação de autenticação como o <strong>Microsoft Authenticator</strong> ou <strong>Google Authenticator</strong> no teu telemóvel.</p>
+                    </div>
+
+                    <div class="mb-4 border-bottom pb-4">
+                        <h5 class="fw-bold text-primary">Passo 2: Ler o Código QR</h5>
+                        <p>Abre a app e lê este código QR:</p>
+
+                        <div class="text-center my-3">
+                            <div id="qrCode"></div>
+                            <div id="qrCodeData" data-url="@Model.AuthenticatorUri"></div>
+                        </div>
+
+                        <div class="alert alert-light text-center border">
+                            <small>Não consegues ler o código? Insere esta chave manualmente:</small><br>
+                            <code class="fw-bold text-dark fs-5">@Model.SharedKey</code>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h5 class="fw-bold text-primary">Passo 3: Confirmar</h5>
+                        <p>Insere o código de 6 dígitos que apareceu na tua app.</p>
+
+                        <form id="send-code" method="post">
+                            <div class="form-floating mb-3">
+                                <input asp-for="Input.Code" class="form-control text-center fs-4 letter-spacing-2" autocomplete="off" placeholder="000000" maxlength="6" />
+                                <label asp-for="Input.Code">Código de Verificação</label>
+                                <span asp-validation-for="Input.Code" class="text-danger"></span>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
+                                Verificar e Ativar
+                            </button>
+                            <div asp-validation-summary="ModelOnly" class="text-danger mt-2"></div>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a asp-page="./Index" class="text-decoration-none text-muted">
+                    <i class="bi bi-arrow-left"></i> Voltar à Gestão de Conta
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script type="text/javascript">
+        // Isto espera que a página carregue para desenhar o quadrado
+        window.addEventListener("load", function () {
+            new QRCode(document.getElementById("qrCode"),
+                {
+                    text: "@Html.Raw(Model.AuthenticatorUri)",
+                    width: 150,
+                    height: 150
+                });
+        });
+    </script>
+}

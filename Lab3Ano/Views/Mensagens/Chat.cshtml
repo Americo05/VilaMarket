@@ -1,0 +1,163 @@
+﻿@model IEnumerable<Lab3Ano.Models.Entidades.Mensagem>
+
+@{
+    ViewData["Title"] = "Chat com " + ViewBag.OutroUserName;
+    bool souVendedor = ViewBag.SouVendedor != null && (bool)ViewBag.SouVendedor;
+}
+
+<div class="container py-4">
+    <div class="mb-3">
+        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm border-0 bg-white">
+            <i class="bi bi-arrow-left me-2"></i>Voltar à Caixa de Entrada
+        </a>
+    </div>
+
+    <div class="mb-3">
+        
+        @if (ViewBag.VisitaPendente != null)
+        {
+            <div class="alert alert-warning d-flex justify-content-between align-items-center shadow-sm">
+                <div>
+                    <strong><i class="bi bi-calendar-event"></i> Visita Pendente</strong>
+                    <span class="small d-block">
+                        @if (souVendedor) { <text>O utilizador pediu para marcar uma visita.</text> }
+                        else { <text>O teu pedido de visita foi enviado e aguarda confirmação.</text> }
+                    </span>
+                </div>
+                
+                @if (souVendedor)
+                {
+                    <form asp-action="ConfirmarVisita" method="post">
+                        <input type="hidden" name="visitaId" value="@ViewBag.VisitaPendente.Id" />
+                        <input type="hidden" name="outroUserId" value="@ViewBag.OutroUserId" />
+                        <input type="hidden" name="anuncioId" value="@ViewBag.AnuncioId" />
+                        <button type="submit" class="btn btn-success btn-sm fw-bold">Confirmar Visita</button>
+                    </form>
+                }
+                else
+                {
+                     <span class="badge bg-secondary">A aguardar vendedor...</span>
+                }
+            </div>
+        }
+
+        @if (ViewBag.ReservaPendente != null)
+        {
+            <div class="alert alert-info d-flex justify-content-between align-items-center shadow-sm">
+                <div>
+                    <strong><i class="bi bi-bookmark-check"></i> Pedido de Reserva</strong>
+                    <span class="small d-block">
+                        @if (souVendedor) { <text>O utilizador quer reservar este carro.</text> }
+                        else { <text>O pedido de reserva foi enviado e aguarda aprovação.</text> }
+                    </span>
+                </div>
+
+                @if (souVendedor)
+                {
+                    <form asp-action="ConfirmarReserva" method="post">
+                        <input type="hidden" name="reservaId" value="@ViewBag.ReservaPendente.Id" />
+                        <input type="hidden" name="outroUserId" value="@ViewBag.OutroUserId" />
+                        <input type="hidden" name="anuncioId" value="@ViewBag.AnuncioId" />
+                        <button type="submit" class="btn btn-primary btn-sm fw-bold">Aceitar Reserva</button>
+                    </form>
+                }
+                else
+                {
+                    <span class="badge bg-secondary">A aguardar aprovação...</span>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="card shadow border-0" style="height: 75vh;">
+        <div id="chatFullPageContainer" class="h-100">
+            <partial name="_ChatPartial" model="Model" />
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var chatInterval = null;
+        var chatUrlBase = '/Mensagens/ChatPartial?outroUserId=@ViewBag.OutroUserId&anuncioId=@ViewBag.AnuncioId';
+
+        $(document).ready(function () {
+            ajustarLayoutParaFullPage();
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(atualizarChatFullPage, 2500);
+        });
+
+        function ajustarLayoutParaFullPage() {
+            var container = document.getElementById('chatFullPageContainer');
+            var cardPartial = container.querySelector('.card');
+
+            if(cardPartial) {
+                cardPartial.classList.remove('border-0', 'shadow-sm');
+                cardPartial.classList.add('h-100');
+            }
+            var chatBox = document.getElementById("chatBox");
+            if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function atualizarChatFullPage() {
+            var url = chatUrlBase + "&v=" + new Date().getTime();
+
+            fetch(url)
+                .then(r => r.text())
+                .then(html => {
+                    var parser = new DOMParser();
+                    var doc = parser.parseFromString(html, 'text/html');
+                    
+                    var novaListaMsg = doc.getElementById('chatBox');
+                    var chatBoxAtual = document.getElementById('chatBox');
+
+                    // Tenta atualizar os alertas se existirem
+                    // (Nota: Isto é um hack rápido, o ideal seria o partial incluir os alertas, mas funciona para o que queres)
+                    var novosAlertas = doc.querySelector('.mb-3 .alert'); 
+                    
+                    if (!novaListaMsg) novaListaMsg = doc.querySelector('.card-body');
+                    if (!chatBoxAtual) chatBoxAtual = document.querySelector('#chatFullPageContainer .card-body');
+
+                    if (novaListaMsg && chatBoxAtual) {
+                        if (chatBoxAtual.innerHTML.trim() !== novaListaMsg.innerHTML.trim()) {
+                            chatBoxAtual.innerHTML = novaListaMsg.innerHTML;
+                            setTimeout(() => {
+                                if(chatBoxAtual) chatBoxAtual.scrollTop = chatBoxAtual.scrollHeight;
+                            }, 50);
+                        }
+                    }
+                });
+        }
+
+        function enviarMensagemInterna(e) {
+            e.preventDefault();
+            var inputTexto = document.getElementById("txtMensagemInterno");
+            var inputDest = document.getElementById("destinatarioIdInterno");
+            var inputAnuncio = document.getElementById("anuncioIdInterno");
+
+            if (!inputTexto || !inputTexto.value.trim()) return;
+
+            var dados = new FormData();
+            dados.append("destinatarioId", inputDest.value);
+            dados.append("conteudo", inputTexto.value);
+            if (inputAnuncio) dados.append("anuncioId", inputAnuncio.value);
+
+            inputTexto.disabled = true;
+
+            fetch('/Mensagens/Enviar', { method: 'POST', body: dados })
+            .then(r => r.json())
+            .then(data => {
+                inputTexto.disabled = false;
+                if (data.success) {
+                    inputTexto.value = "";
+                    inputTexto.focus();
+                    setTimeout(atualizarChatFullPage, 100);
+                    setTimeout(() => {
+                        var cb = document.getElementById("chatBox");
+                        if(cb) cb.scrollTop = cb.scrollHeight;
+                    }, 300);
+                }
+            });
+        }
+    </script>
+}

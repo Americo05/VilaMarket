@@ -1,0 +1,137 @@
+﻿@model IEnumerable<Lab3Ano.Models.Entidades.Mensagem>
+
+@{
+    var meuId = ViewBag.MeuId as string;
+    bool souVendedor = ViewBag.SouVendedor != null && (bool)ViewBag.SouVendedor;
+    var visita = ViewBag.VisitaPendente as Lab3Ano.Models.Entidades.Visita;
+    var reserva = ViewBag.ReservaPendente as Lab3Ano.Models.Entidades.Reserva;
+}
+
+<div class="card border-0 h-100 d-flex flex-column bg-white">
+    <div class="card-header bg-white border-bottom py-3 d-flex align-items-center flex-shrink-0">
+        <button onclick="if(typeof fecharChat === 'function') fecharChat(); else if(typeof voltarParaLista === 'function') voltarParaLista();"
+                class="btn btn-light btn-sm rounded-circle me-3 d-md-none">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+
+        <div class="d-flex align-items-center">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                <span class="fw-bold">@ViewBag.OutroUserName?.Substring(0, 1).ToUpper()</span>
+            </div>
+            <div>
+                <h6 class="mb-0 fw-bold">@ViewBag.OutroUserName</h6>
+                @if (ViewBag.AnuncioId != null)
+                {
+                    <small class="text-muted" style="font-size: 0.75rem;">Ref: #@ViewBag.AnuncioId</small>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body bg-light flex-grow-1 overflow-auto" id="chatBox" style="scroll-behavior: smooth;">
+
+        @if (!Model.Any())
+        {
+            <div class="d-flex h-100 flex-column align-items-center justify-content-center text-muted opacity-50">
+                <i class="bi bi-chat-dots fs-1 mb-2"></i>
+                <p class="small">Inicia a conversa!</p>
+            </div>
+        }
+
+        @foreach (var msg in Model)
+        {
+            bool souEu = msg.RemetenteId == meuId;
+
+            <div class="d-flex mb-2 @(souEu ? "justify-content-end" : "justify-content-start")">
+                <div class="p-2 px-3 shadow-sm position-relative"
+                     style="max-width: 85%;
+                                     border-radius: 12px;
+                                     border-top-@(souEu ? "right" : "left")-radius: 0;
+                                     background-color: @(souEu ? "#0d6efd" : "#ffffff");
+                                     color: @(souEu ? "#fff" : "#000");
+                                     font-size: 0.9rem;
+                                     word-wrap: break-word;">
+
+                    @msg.Conteudo
+
+                    @if (msg.Conteudo.Contains("pedido de reserva") && reserva != null && reserva.IsAtiva == false)
+                    {
+                        <div class="mt-2 p-2 rounded bg-white text-dark border small shadow-sm">
+                            <div class="fw-bold mb-1 text-primary"><i class="bi bi-bookmark-star"></i> Pedido de Reserva</div>
+                            @if (souVendedor && !souEu)
+                            {
+                                <div class="d-flex gap-1 mt-2">
+                                    <form asp-controller="Negocios" asp-action="AprovarReserva" method="post" class="flex-fill">
+                                        <input type="hidden" name="reservaId" value="@reserva.Id" />
+                                        <button type="submit" class="btn btn-success btn-sm w-100 py-0" style="font-size: 0.75rem;">Aceitar</button>
+                                    </form>
+                                    <form asp-controller="Negocios" asp-action="RejeitarReserva" method="post" class="flex-fill">
+                                        <input type="hidden" name="reservaId" value="@reserva.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm w-100 py-0" style="font-size: 0.75rem;">Recusar</button>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-muted italic" style="font-size: 0.7rem;">A aguardar resposta...</div>
+                            }
+                        </div>
+                    }
+
+                    @if (msg.Conteudo.ToLower().Contains("visita") && visita != null && visita.Estado == "Pendente")
+                    {
+                        <div class="mt-2 p-2 rounded bg-white text-dark border small shadow-sm">
+                            <div class="fw-bold mb-1 text-info"><i class="bi bi-calendar-event"></i> Visita Solicitada</div>
+                            <div class="mb-2" style="font-size: 0.75rem;">Data: @visita.DataHora.ToString("dd/MM/yyyy HH:mm")</div>
+
+                            @if (souVendedor && !souEu)
+                            {
+                                <form asp-controller="Mensagens" asp-action="ConfirmarVisita" method="post">
+                                    <input type="hidden" name="visitaId" value="@visita.Id" />
+                                    <input type="hidden" name="outroUserId" value="@msg.RemetenteId" />
+                                    <input type="hidden" name="anuncioId" value="@msg.AnuncioId" />
+                                    <button type="submit" class="btn btn-primary btn-sm w-100 py-1 fw-bold" style="font-size: 0.75rem;">Confirmar Visita</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <div class="text-muted italic" style="font-size: 0.7rem;">Aguardando confirmação...</div>
+                            }
+                        </div>
+                    }
+
+                    <div class="text-end mt-1 d-flex align-items-center justify-content-end gap-1"
+                         style="font-size: 0.65rem; opacity: 0.7;">
+                        <span>@msg.DataEnvio.ToString("HH:mm")</span>
+                        @if (souEu)
+                        {
+                            <i class="bi @(msg.Lida ? "bi-check-all" : "bi-check")"></i>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="card-footer bg-white p-2 flex-shrink-0 border-top">
+        <form onsubmit="enviarMensagemInterna(event)" class="d-flex align-items-center gap-2" autocomplete="off">
+            <input type="hidden" id="destinatarioIdInterno" value="@ViewBag.OutroUserId" />
+            <input type="hidden" id="anuncioIdInterno" value="@ViewBag.AnuncioId" />
+
+            <input type="text" id="txtMensagemInterno" class="form-control border bg-light rounded-pill ps-3"
+                   placeholder="Escreve uma mensagem..." required>
+
+            <button class="btn btn-primary rounded-circle shadow-sm" type="submit"
+                    style="width: 42px; height: 42px;">
+                <i class="bi bi-send-fill"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    setTimeout(function() {
+        var chatBox = document.getElementById("chatBox");
+        if(chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+    }, 100);
+</script>

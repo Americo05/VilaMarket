@@ -1,0 +1,48 @@
+﻿@model Lab3Ano.Models.MarketplaceInfoViewModel
+
+@{
+    ViewData["Title"] = "Sobre o Marketplace";
+}
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4">@Model.Nome</h1>
+        <p class="lead text-muted">A sua plataforma de confiança para compra e venda de automóveis.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fa fa-info-circle"></i> Contactos e Suporte</h4>
+                </div>
+                <div class="card-body">
+                    <p><strong><i class="fa fa-envelope"></i> Email:</strong> <a href="mailto:@Model.EmailSuporte">@Model.EmailSuporte</a></p>
+                    <p><strong><i class="fa fa-phone"></i> Telefone:</strong> @Model.Telefone</p>
+                    <hr />
+                    <h5 class="text-primary">Horário de Atendimento</h5>
+                    <p>@Model.HorarioSuporte</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <h4 class="mb-0"><i class="fa fa-file-text"></i> Termos e Políticas</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-dark">Termos de Uso</h5>
+                    <p class="small text-muted" style="white-space: pre-line">@Model.TermosUso</p>
+                    <hr />
+                    <h5 class="text-dark">Política de Privacidade</h5>
+                    <p class="small text-muted">@Model.PoliticaPrivacidade</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Voltar à Página Inicial</a>
+    </div>
+</div>

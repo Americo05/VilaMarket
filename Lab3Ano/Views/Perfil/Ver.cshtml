@@ -1,0 +1,156 @@
+﻿@model Lab3Ano.Models.ViewModels.PerfilPublicoViewModel
+
+@{
+    ViewData["Title"] = "Perfil de " + Model.Nome;
+}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-10">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="h-100 py-2 @(Model.TipoUtilizador == "Admin" ? "bg-danger" : (Model.TipoUtilizador == "Vendedor" ? "bg-warning" : "bg-secondary"))"></div>
+
+                <div class="card-body p-4 p-md-5 d-flex flex-column flex-md-row align-items-center text-center text-md-start">
+
+                    <div class="mb-3 mb-md-0 me-md-4 position-relative">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center bg-light border"
+                             style="width: 100px; height: 100px; font-size: 2.5rem;">
+                            @if (Model.TipoUtilizador == "Vendedor")
+                            {
+                                <i class="bi bi-shop text-warning"></i>
+                            }
+                            else if (Model.TipoUtilizador == "Admin")
+                            {
+
+                                <i class="bi bi-shield-lock-fill text-danger"></i>
+                            }
+                            else
+                            {
+
+                                <i class="bi bi-person text-secondary"></i>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="flex-grow-1">
+                        <h2 class="fw-bold mb-1">@Model.Nome</h2>
+                        <div class="d-flex flex-wrap justify-content-center justify-content-md-start gap-2 mb-2">
+                            @if (Model.TipoUtilizador == "Admin")
+                            {
+                                <span class="badge bg-danger"><i class="bi bi-star-fill me-1"></i>Staff</span>
+                            }
+                            else if (Model.TipoUtilizador == "Vendedor")
+                            {
+                                @if (Model.IsAprovado)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Profissional Verificado</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Aprovação Pendente</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Membro</span>
+                            }
+                            <span class="badge bg-light text-dark border"><i class="bi bi-geo-alt me-1"></i>@(Model.Localidade ?? "Portugal")</span>
+                        </div>
+                        <p class="text-muted mb-0"><i class="bi bi-envelope me-2"></i>@Model.Email</p>
+                    </div>
+
+                    @if (Model.TipoUtilizador == "Admin" && User.IsInRole("Admin"))
+                    {
+                        <div class="mt-3 mt-md-0 ms-md-3">
+                            <a href="/Admin" class="btn btn-outline-danger rounded-pill">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.TipoUtilizador == "Vendedor")
+    {
+        <div class="d-flex align-items-center justify-content-between mb-4 border-bottom pb-2">
+            <h3 class="fw-bold m-0 text-dark">
+                <i class="bi bi-car-front-fill me-2 text-primary"></i>Stock Disponível
+            </h3>
+            <span class="badge bg-primary rounded-pill fs-6">@Model.TotalAnuncios Viaturas</span>
+        </div>
+
+        @if (Model.Anuncios != null && Model.Anuncios.Any())
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                @foreach (var anuncio in Model.Anuncios)
+                {
+                    var carro = anuncio.IdCarroNavigation;
+                    var imagemCapa = anuncio.Imagems.FirstOrDefault()?.Url;
+                    var imgUrl = string.IsNullOrEmpty(imagemCapa) ? null : (imagemCapa.StartsWith("/") ? imagemCapa : "/imagens/" + imagemCapa);
+
+                    <div class="col">
+                        <div class="card h-100 shadow-sm border-0 car-card" style="transition: transform 0.2s;">
+                            <div class="position-relative overflow-hidden bg-light" style="height: 220px;">
+                                <a href="/Anuncio/Details/@anuncio.Id">
+                                    @if (imgUrl != null)
+                                    {
+                                        <img src="@imgUrl" class="w-100 h-100 object-fit-cover" alt="@anuncio.Titulo"
+                                             onerror="this.onerror=null;this.parentElement.innerHTML='<div class=\'d-flex h-100 align-items-center justify-content-center text-muted\'><i class=\'bi bi-image fs-1\'></i></div>';" />
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex h-100 align-items-center justify-content-center text-muted">
+                                            <i class="bi bi-camera fs-1 opacity-50"></i>
+                                        </div>
+                                    }
+                                </a>
+                                <span class="badge bg-dark position-absolute bottom-0 end-0 m-2 shadow">
+                                    @(carro?.Preco.ToString("N0") ?? "Sob Consulta") €
+                                </span>
+                            </div>
+
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold text-truncate mb-1">
+                                    <a href="/Anuncio/Details/@anuncio.Id" class="text-decoration-none text-dark stretched-link">
+                                        @anuncio.Titulo
+                                    </a>
+                                </h5>
+                                <p class="text-muted small mb-2">
+                                    @(carro?.IdModeloNavigation?.IdMarcaNavigation?.Nome) @(carro?.IdModeloNavigation?.Nome) • @(carro?.Ano)
+                                </p>
+                                <div class="d-flex justify-content-between small text-muted border-top pt-2 mt-2">
+                                    <span><i class="bi bi-fuel-pump me-1"></i>@carro?.IdCombustivelNavigation?.Tipo</span>
+                                    <span><i class="bi bi-speedometer2 me-1"></i>@(carro?.Quilometragem.ToString("N0") + " km")</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5 bg-light rounded-3 border border-dashed">
+                <i class="bi bi-emoji-neutral text-muted mb-3" style="font-size: 3rem;"></i>
+                <h5 class="text-muted">Este vendedor ainda não tem anúncios ativos.</h5>
+            </div>
+        }
+    }
+    else if (Model.TipoUtilizador != "Admin")
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-lock text-muted fs-1 mb-3"></i>
+            <p class="text-muted">As atividades recentes deste membro são privadas.</p>
+        </div>
+    }
+</div>
+
+<style>
+    .car-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+    }
+</style>

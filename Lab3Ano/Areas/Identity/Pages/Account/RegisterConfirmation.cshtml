@@ -1,0 +1,100 @@
+﻿@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Confirmação de Registo";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-body p-5 text-center">
+
+                    <div class="mb-4">
+                        <i class="bi bi-envelope-paper-heart-fill text-primary" style="font-size: 4rem;"></i>
+                    </div>
+
+                    <h2 class="fw-bold mb-3">Verifica o teu Email</h2>
+
+                    @if (!string.IsNullOrEmpty(Model.StatusMessage))
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i> @Model.StatusMessage
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    @if (Model.DisplayConfirmAccountLink)
+                    {
+                        <p class="text-danger">
+                            Este é um link de desenvolvimento porque não tens um serviço de email configurado:
+                            <br />
+                            <a id="confirm-link" href="@Model.EmailConfirmationUrl" class="fw-bold">Clica aqui para confirmar a conta</a>
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="text-muted lead mb-4">
+                            Enviámos um email de confirmação para <strong>@Model.Email</strong>.
+                        </p>
+                        <p class="small text-muted mb-4">
+                            Por favor verifica a tua caixa de entrada e a pasta de <strong>Spam</strong>.<br>
+                            Precisas de confirmar o email para acederes a todas as funcionalidades.
+                        </p>
+
+                        <form method="post">
+                            <input type="hidden" name="email" value="@Model.Email" />
+
+                            <div class="d-grid gap-2 col-8 mx-auto">
+                                <button type="submit" id="resendSubmit" class="btn btn-outline-primary fw-bold" disabled>
+                                    <i class="bi bi-send"></i> Reenviar Email
+                                </button>
+                            </div>
+                            <p class="mt-2 small text-muted" id="timerText">Podes reenviar em 60s</p>
+                        </form>
+                    }
+
+                    <hr class="my-4">
+
+                    <a href="/" class="btn btn-link text-decoration-none text-muted">
+                        <i class="bi bi-arrow-left"></i> Voltar à Página Inicial
+                    </a>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+      
+        document.addEventListener('DOMContentLoaded', function () {
+            var btn = document.getElementById('resendSubmit');
+            var txt = document.getElementById('timerText');
+
+           
+            if (!btn) return;
+
+            var timeLeft = 60; 
+
+            btn.disabled = true; 
+
+            var timerId = setInterval(function () {
+                timeLeft--;
+
+                if (timeLeft > 0) {
+                    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Aguarda...';
+                    txt.innerText = 'Podes reenviar em ' + timeLeft + 's';
+                } else {
+                    clearInterval(timerId);
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-send"></i> Reenviar Email';
+                    btn.classList.remove('btn-outline-primary');
+                    btn.classList.add('btn-primary');
+                    txt.innerText = 'Se não recebeste, tenta novamente.';
+                }
+            }, 1000);
+        });
+    </script>
+}
